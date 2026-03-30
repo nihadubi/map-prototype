@@ -27,6 +27,8 @@ export function CityMap({
   selectedPinId,
   focusedPinId,
   previewCoordinates,
+  animatePreviewPin = true,
+  mapStyle,
   onMapClick,
   onPinSelect,
   onMapReady,
@@ -59,7 +61,7 @@ export function CityMap({
     ? {
         lat: previewCoordinates.lat,
         lng: previewCoordinates.lng,
-        className: markerStyles.preview.className,
+        className: `${markerStyles.preview.className}${animatePreviewPin ? ' is-animated' : ''}`.trim(),
         label: markerStyles.preview.label,
       }
     : null;
@@ -79,6 +81,7 @@ export function CityMap({
         initialCenter={MAP_CENTER_BAKU_LNGLAT}
         initialZoom={DEFAULT_MAP_ZOOM}
         maxBounds={AZERBAIJAN_MAX_BOUNDS}
+        mapStyle={mapStyle}
         onMapClick={onMapClick}
         onMapReady={onMapReady}
         markers={markers}

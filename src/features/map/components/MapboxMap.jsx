@@ -4,7 +4,7 @@ import {
   AZERBAIJAN_MAX_BOUNDS,
   DEFAULT_MAP_ZOOM,
   MAP_CENTER_BAKU_LNGLAT,
-  MAPBOX_STYLE_URL,
+  MAPBOX_NIGHT_STYLE_URL,
 } from '../constants/mapConfig';
 
 const ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -40,7 +40,8 @@ export function MapboxMap({
   markers = [],
   previewMarker = null,
   focusTarget = null,
-  mapStyle = MAPBOX_STYLE_URL,
+  mapStyle = MAPBOX_NIGHT_STYLE_URL,
+  mapDepth = '3d',
   showNavigation = false,
 }) {
   const containerRef = useRef(null);
@@ -48,6 +49,65 @@ export function MapboxMap({
   const markersRef = useRef([]);
   const callbacksRef = useRef({ onMapClick, onMapReady });
   const focusTargetRef = useRef(focusTarget);
+  const styleRef = useRef(mapStyle);
+  const depthRef = useRef(mapDepth);
+
+  function applyMapDepth(map, nextDepth) {
+    const layerId = 'citylayer-3d-buildings';
+
+    try {
+      if (typeof map.setConfigProperty === 'function') {
+        map.setConfigProperty('basemap', 'show3dObjects', nextDepth === '3d');
+      }
+    } catch (error) {
+      console.warn('CityLayer map depth config fallback triggered:', error);
+    }
+
+    try {
+      if (nextDepth !== '3d') {
+        if (map.getLayer(layerId)) {
+          map.removeLayer(layerId);
+        }
+        return;
+      }
+
+      if (map.getLayer(layerId) || !map.getSource('composite')) {
+        return;
+      }
+
+      const firstSymbolLayerId = map
+        .getStyle()
+        ?.layers?.find((layer) => layer.type === 'symbol' && layer.layout?.['text-field'])?.id;
+
+      map.addLayer(
+        {
+          id: layerId,
+          source: 'composite',
+          'source-layer': 'building',
+          filter: ['==', ['get', 'extrude'], 'true'],
+          type: 'fill-extrusion',
+          minzoom: 14,
+          paint: {
+            'fill-extrusion-color': [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              14,
+              '#9aa5b1',
+              16,
+              '#cbd5e1',
+            ],
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': ['get', 'min_height'],
+            'fill-extrusion-opacity': 0.82,
+          },
+        },
+        firstSymbolLayerId
+      );
+    } catch (error) {
+      console.warn('CityLayer 3D buildings could not be applied:', error);
+    }
+  }
 
   useEffect(() => {
     callbacksRef.current = { onMapClick, onMapReady };
@@ -56,6 +116,10 @@ export function MapboxMap({
   useEffect(() => {
     focusTargetRef.current = focusTarget;
   }, [focusTarget]);
+
+  useEffect(() => {
+    depthRef.current = mapDepth;
+  }, [mapDepth]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -71,7 +135,7 @@ export function MapboxMap({
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: mapStyle,
+      style: styleRef.current,
       center: initialCenter,
       zoom: initialZoom,
       minZoom,
@@ -83,6 +147,10 @@ export function MapboxMap({
     if (showNavigation) {
       map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
     }
+
+    map.on('style.load', () => {
+      applyMapDepth(map, depthRef.current);
+    });
 
     map.on('click', (event) => {
       callbacksRef.current.onMapClick?.(normalizeMapClick(event));
@@ -133,7 +201,28 @@ export function MapboxMap({
       map.remove();
       mapRef.current = null;
     };
-  }, [initialCenter, initialZoom, mapStyle, maxBounds, maxZoom, minZoom, showNavigation]);
+  }, [initialCenter, initialZoom, maxBounds, maxZoom, minZoom, showNavigation]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || styleRef.current === mapStyle) {
+      return;
+    }
+
+    styleRef.current = mapStyle;
+    map.setStyle(mapStyle);
+  }, [mapStyle]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    if (map.isStyleLoaded()) {
+      applyMapDepth(map, mapDepth);
+    }
+  }, [mapDepth]);
 
   useEffect(() => {
     const map = mapRef.current;

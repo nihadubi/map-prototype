@@ -37,7 +37,7 @@ export function AddPinPanel({
   return (
     <div className={shellClassName} aria-hidden={isDrawer && !isOpen}>
       <section className={panelClassName}>
-        <div className="border-b border-white/10 px-5 pb-4 pt-5 sm:px-6">
+        <div className="border-b border-white/10 bg-white/[0.02] px-5 pb-4 pt-5 sm:px-6">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
@@ -61,13 +61,13 @@ export function AddPinPanel({
               ) : null}
             </div>
           </div>
-          <p className="text-sm leading-6 text-slate-400">
+          <p className="max-w-[26rem] text-sm leading-6 text-slate-400">
             Click anywhere on the map, review the coordinates, and publish a new {values.type} to CityLayer.
           </p>
           <p className="mt-3 text-xs font-medium text-slate-500">Signed in as {user?.displayName || user?.email}</p>
         </div>
 
-        <form id={formId} className="custom-scrollbar flex grow flex-col gap-7 overflow-y-auto px-5 py-5 sm:px-6" onSubmit={onSubmit}>
+        <form id={formId} className="custom-scrollbar flex grow flex-col gap-6 overflow-y-auto px-5 py-5 sm:px-6" onSubmit={onSubmit}>
           {!locationReady && locationPrompt ? (
             <div className="rounded-[1.35rem] border border-sky-400/20 bg-sky-500/10 p-4 text-sm text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <p className="font-semibold uppercase tracking-[0.2em] text-[11px] text-sky-300">Pick a location</p>
@@ -82,7 +82,7 @@ export function AddPinPanel({
 
           <TypeSelector value={values.type} onChange={onTypeChange} />
 
-          <div className="space-y-5">
+          <div className="space-y-5 rounded-[1.5rem] bg-white/[0.02] p-4 ring-1 ring-white/8">
             <div>
               <label className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-slate-400" htmlFor="title">
                 Title
@@ -124,7 +124,11 @@ export function AddPinPanel({
           {errors.category ? <p className="field-error -mt-4">{errors.category}</p> : null}
 
           {values.type === 'event' ? (
-            <div className="space-y-4 border-t border-white/10 pt-1">
+            <div className="space-y-4 rounded-[1.5rem] bg-white/[0.02] p-4 ring-1 ring-white/8">
+              <div>
+                <p className="text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-slate-400">Event Details</p>
+                <p className="mt-2 text-sm text-slate-500">Set the schedule so people know when to show up.</p>
+              </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-slate-400" htmlFor="eventDate">
@@ -162,11 +166,15 @@ export function AddPinPanel({
           {submitError ? <p className="form-error">{submitError}</p> : null}
         </form>
 
-        <div className="border-t border-white/10 px-5 pb-5 pt-4 sm:px-6">
+        <div className="border-t border-white/10 bg-white/[0.02] px-5 pb-5 pt-4 sm:px-6">
+          <div className="mb-4 flex items-center justify-between gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+            <span>{locationReady ? 'Ready to publish' : 'Waiting for map selection'}</span>
+            <span>{values.type === 'event' ? 'Event pin' : 'Place pin'}</span>
+          </div>
           <button
             type="submit"
             form={formId}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 py-4 text-sm font-bold text-white shadow-[0_20px_45px_rgba(99,102,241,0.35)] transition hover:shadow-[0_24px_55px_rgba(99,102,241,0.42)] active:scale-[0.99]"
+            className="flex w-full items-center justify-center gap-2 rounded-[1.15rem] bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 py-4 text-sm font-bold text-white shadow-[0_20px_45px_rgba(99,102,241,0.35)] transition hover:shadow-[0_24px_55px_rgba(99,102,241,0.42)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isSubmitting || submitDisabled}
           >
             <span>{isSubmitting ? 'Creating Pin...' : 'Create Pin'}</span>

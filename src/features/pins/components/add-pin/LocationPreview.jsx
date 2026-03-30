@@ -23,8 +23,8 @@ export function LocationPreview({ coordinates, error }) {
   const isReady = Boolean(coordinates);
 
   return (
-    <div className="flex items-start gap-4 rounded-[1.5rem] border border-indigo-400/20 bg-gradient-to-br from-indigo-500/15 to-fuchsia-500/10 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-      <div className="rounded-2xl bg-indigo-500 p-2.5 text-white shadow-[0_12px_28px_rgba(99,102,241,0.28)]">
+    <div className="flex items-start gap-4 rounded-[1.6rem] border border-indigo-400/20 bg-gradient-to-br from-indigo-500/15 via-violet-500/10 to-fuchsia-500/8 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+      <div className="rounded-[1.1rem] bg-gradient-to-br from-indigo-500 to-violet-500 p-3 text-white shadow-[0_12px_28px_rgba(99,102,241,0.28)]">
         <span className="material-symbols-outlined text-xl" aria-hidden="true">share_location</span>
       </div>
       <div className="min-w-0">

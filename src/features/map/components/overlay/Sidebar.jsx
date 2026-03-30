@@ -2,7 +2,6 @@ const navItems = [
   { id: 'discover', label: 'Discover', icon: 'explore' },
   { id: 'events', label: 'Events', icon: 'map' },
   { id: 'saved', label: 'Saved', icon: 'bookmark' },
-  { id: 'collections', label: 'Collections', icon: 'stack' },
 ];
 
 export function Sidebar({
@@ -14,6 +13,7 @@ export function Sidebar({
   activeSection,
   onSectionChange,
   sectionMeta,
+  onSettingsClick,
   onCreatePinClick,
 }) {
   return (
@@ -48,7 +48,7 @@ export function Sidebar({
         </div>
 
         <div className="map-sidebar-footer">
-          <button type="button" className="map-sidebar-link">
+          <button type="button" className="map-sidebar-link" onClick={onSettingsClick}>
             <span className="map-sidebar-icon material-symbols-outlined" aria-hidden="true">settings</span>
             <span className="map-sidebar-label">Settings</span>
           </button>

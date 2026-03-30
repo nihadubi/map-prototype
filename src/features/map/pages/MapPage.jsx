@@ -2,16 +2,33 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
 import { CityMap } from '../components/CityMap';
+import {
+  MAPBOX_DAWN_STYLE_URL,
+  MAPBOX_DAY_STYLE_URL,
+  MAPBOX_DUSK_STYLE_URL,
+  MAPBOX_NIGHT_STYLE_URL,
+} from '../constants/mapConfig';
 import { Header } from '../components/overlay/Header';
 import { MapControls } from '../components/overlay/MapControls';
 import { PinCard } from '../components/overlay/PinCard';
+import { SettingsPanel } from '../components/overlay/SettingsPanel';
 import { Sidebar } from '../components/overlay/Sidebar';
+import { getBakuThemeLabel, getBakuThemeMode } from '../utils/themeMode';
 import { AddPinPanel } from '../../pins/components/add-pin/AddPinPanel';
 import { categoryOptions } from '../../pins/constants/pinSchema';
 import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
 import { subscribeToPins } from '../../pins/services/pins.service';
 
 const SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
+const MAP_SETTINGS_STORAGE_KEY = 'citylayer.mapSettings';
+const defaultMapSettings = {
+  followBakuTheme: true,
+  manualTheme: 'night',
+  mapDepth: '3d',
+  openCreateOnMapClick: true,
+  sidebarExpandOnHover: true,
+  animatePreviewPin: true,
+};
 
 function matchesSearch(pin, query) {
   if (!query) {
@@ -19,7 +36,7 @@ function matchesSearch(pin, query) {
   }
 
   const normalized = query.trim().toLowerCase();
-  return [pin.title, pin.description, pin.category, pin.placeType, pin.eventDate]
+  return [pin.title, pin.description, pin.category, pin.eventDate]
     .filter(Boolean)
     .some((value) => value.toLowerCase().includes(normalized));
 }
@@ -38,6 +55,20 @@ function readSavedPinIds() {
   }
 }
 
+function readMapSettings() {
+  if (typeof window === 'undefined') {
+    return defaultMapSettings;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(MAP_SETTINGS_STORAGE_KEY);
+    return raw ? { ...defaultMapSettings, ...JSON.parse(raw) } : defaultMapSettings;
+  } catch (error) {
+    console.error('Failed to read map settings:', error);
+    return defaultMapSettings;
+  }
+}
+
 export function MapPage() {
   const navigate = useNavigate();
   const { user, isAuthLoading, isAuthenticated, logout } = useAuth();
@@ -51,10 +82,13 @@ export function MapPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapActions, setMapActions] = useState(null);
   const [savedPinIds, setSavedPinIds] = useState(readSavedPinIds);
+  const [mapSettings, setMapSettings] = useState(readMapSettings);
   const [isPinCardExpanded, setIsPinCardExpanded] = useState(false);
   const [focusedPinId, setFocusedPinId] = useState(null);
   const [isAddPinPanelOpen, setIsAddPinPanelOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [createdPinId, setCreatedPinId] = useState(null);
+  const [themeTick, setThemeTick] = useState(() => Date.now());
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
@@ -76,14 +110,24 @@ export function MapPage() {
     window.localStorage.setItem(SAVED_PINS_STORAGE_KEY, JSON.stringify(savedPinIds));
   }, [savedPinIds]);
 
+  useEffect(() => {
+    window.localStorage.setItem(MAP_SETTINGS_STORAGE_KEY, JSON.stringify(mapSettings));
+  }, [mapSettings]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setThemeTick(Date.now());
+    }, 60000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const basePins = useMemo(() => {
     switch (activeSection) {
       case 'events':
         return pins.filter((pin) => pin.type === 'event');
       case 'saved':
         return pins.filter((pin) => savedPinIds.includes(pin.id));
-      case 'collections':
-        return pins.filter((pin) => pin.type === 'place');
       case 'discover':
       default:
         return pins;
@@ -93,6 +137,17 @@ export function MapPage() {
   const visiblePins = useMemo(() => {
     return basePins.filter((pin) => matchesSearch(pin, searchQuery));
   }, [basePins, searchQuery]);
+
+  const autoTheme = useMemo(() => getBakuThemeMode(new Date(themeTick)), [themeTick]);
+  const bakuThemeLabel = useMemo(() => getBakuThemeLabel(new Date(themeTick)), [themeTick]);
+  const effectiveTheme = mapSettings.followBakuTheme ? autoTheme : mapSettings.manualTheme;
+  const mapStyleByTheme = {
+    dawn: MAPBOX_DAWN_STYLE_URL,
+    day: MAPBOX_DAY_STYLE_URL,
+    dusk: MAPBOX_DUSK_STYLE_URL,
+    night: MAPBOX_NIGHT_STYLE_URL,
+  };
+  const mapStyle = mapStyleByTheme[effectiveTheme] || MAPBOX_NIGHT_STYLE_URL;
 
   const effectiveCreatedPinId = createdPinId || routeCreatedPinId || null;
 
@@ -194,12 +249,46 @@ export function MapPage() {
     }
 
     setIsSidebarOpen(false);
+    setIsSettingsOpen(false);
     setIsPinCardExpanded(false);
     setIsAddPinPanelOpen(true);
   }
 
   function handleCloseAddPinPanel() {
     setIsAddPinPanelOpen(false);
+  }
+
+  function handleMapLocationSelect(coordinates) {
+    setSelectedCoordinates(coordinates);
+    setSelectedPinId(null);
+    setFocusedPinId(null);
+    setIsPinCardExpanded(false);
+    setIsSidebarOpen(false);
+    setIsSettingsOpen(false);
+
+    if (isAuthenticated) {
+      if (mapSettings.openCreateOnMapClick) {
+        setIsAddPinPanelOpen(true);
+      }
+      return;
+    }
+
+    navigate('/auth', { state: { from: '/' } });
+  }
+
+  function handleToggleMapSetting(key, forcedValue) {
+    setMapSettings((current) => ({
+      ...current,
+      [key]: forcedValue ?? !current[key],
+    }));
+  }
+
+  function handleThemeSelect(theme) {
+    setMapSettings((current) => ({
+      ...current,
+      manualTheme: theme,
+      followBakuTheme: false,
+    }));
   }
 
   const {
@@ -234,17 +323,19 @@ export function MapPage() {
     discover: `${pins.length}`,
     events: `${pins.filter((pin) => pin.type === 'event').length}`,
     saved: `${savedPinIds.filter((id) => pins.some((pin) => pin.id === id)).length}`,
-    collections: `${new Set(pins.filter((pin) => pin.type === 'place').map((pin) => pin.category)).size}`,
   }), [pins, savedPinIds]);
 
   return (
-    <section className="map-screen">
+    <section className={`map-screen map-theme-${effectiveTheme}`.trim()}>
       <CityMap
         pins={visiblePins}
         selectedPinId={effectiveSelectedPinId}
         focusedPinId={focusedPinId || createdPin?.id || null}
         previewCoordinates={selectedCoordinates}
-        onMapClick={setSelectedCoordinates}
+        animatePreviewPin={mapSettings.animatePreviewPin}
+        mapStyle={mapStyle}
+        mapDepth={mapSettings.mapDepth}
+        onMapClick={handleMapLocationSelect}
         onPinSelect={handlePinSelect}
         onMapReady={setMapActions}
       />
@@ -272,30 +363,6 @@ export function MapPage() {
                     New pin added: <strong>{createdPin.title}</strong> is now live on the map.
                   </div>
                 ) : null}
-                {selectedCoordinates ? (
-                  <section className="map-selection-panel">
-                    <div className="map-selection-copy">
-                      <span className="map-selection-kicker">CityLayer Pin Drop</span>
-                      <h2>Selected map location</h2>
-                      <p>
-                        {selectedCoordinates.lat}, {selectedCoordinates.lng}
-                      </p>
-                    </div>
-                    <div className="map-selection-actions">
-                      <button type="button" className="map-primary-button" onClick={handleOpenAddPin}>
-                        Create Pin
-                      </button>
-                      <button
-                        type="button"
-                        className="map-card-icon-button"
-                        aria-label="Clear selected location"
-                        onClick={() => setSelectedCoordinates(null)}
-                      >
-                        <span className="material-symbols-outlined" aria-hidden="true">close</span>
-                      </button>
-                    </div>
-                  </section>
-                ) : null}
               </div>
             ) : null}
           </div>
@@ -310,19 +377,35 @@ export function MapPage() {
             }
           }}
           onHoverOpen={() => {
-            if (isDesktopViewport()) {
+            if (isDesktopViewport() && mapSettings.sidebarExpandOnHover) {
               setIsSidebarOpen(true);
             }
           }}
           onHoverClose={() => {
-            if (isDesktopViewport()) {
+            if (isDesktopViewport() && mapSettings.sidebarExpandOnHover) {
               setIsSidebarOpen(false);
             }
           }}
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
           sectionMeta={sectionMeta}
+          onSettingsClick={() => {
+            setIsSettingsOpen(true);
+            if (!isDesktopViewport()) {
+              setIsSidebarOpen(false);
+            }
+          }}
           onCreatePinClick={handleOpenAddPin}
+        />
+
+        <SettingsPanel
+          isOpen={isSettingsOpen}
+          settings={mapSettings}
+          effectiveTheme={effectiveTheme}
+          bakuThemeLabel={bakuThemeLabel}
+          onToggle={handleToggleMapSetting}
+          onThemeSelect={handleThemeSelect}
+          onClose={() => setIsSettingsOpen(false)}
         />
 
         <AddPinPanel
