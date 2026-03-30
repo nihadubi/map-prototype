@@ -4,7 +4,7 @@ import { Header } from './Header';
 
 export function AppLayout() {
   const location = useLocation();
-  const isFullscreenRoute = location.pathname === '/' || location.pathname === '/add-pin';
+  const isFullscreenRoute = ['/', '/add-pin', '/auth'].includes(location.pathname);
 
   useEffect(() => {
     document.body.classList.toggle('map-route-body', isFullscreenRoute);

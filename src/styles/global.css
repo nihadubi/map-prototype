@@ -78,6 +78,16 @@ textarea {
   resize: vertical;
 }
 
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus,
+.auth-input:-webkit-autofill:active {
+  -webkit-text-fill-color: #e2e8f0;
+  -webkit-box-shadow: 0 0 0 1000px rgba(2, 6, 23, 0) inset;
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: #f8fafc;
+}
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
   font-size: 1.25rem;

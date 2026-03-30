@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CityLayer | The Digital Curator Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "surface-container-highest": "#20262f",
+                "background": "#0a0e14",
+                "outline": "#72757d",
+                "inverse-on-surface": "#51555c",
+                "tertiary-fixed-dim": "#ff61f8",
+                "tertiary-container": "#fe00fe",
+                "surface": "#0a0e14",
+                "inverse-surface": "#f8f9ff",
+                "tertiary-fixed": "#ff81f5",
+                "secondary": "#00f4fe",
+                "primary-fixed-dim": "#b772ff",
+                "error-dim": "#d73357",
+                "error": "#ff6e84",
+                "secondary-container": "#00696e",
+                "primary-dim": "#9c42f4",
+                "secondary-fixed": "#00f4fe",
+                "on-primary-fixed": "#000000",
+                "on-primary": "#46007d",
+                "tertiary": "#ff51fa",
+                "outline-variant": "#44484f",
+                "on-error": "#490013",
+                "on-error-container": "#ffb2b9",
+                "on-tertiary-fixed-variant": "#6a006a",
+                "secondary-fixed-dim": "#00e5ee",
+                "on-secondary-fixed": "#004346",
+                "on-tertiary": "#400040",
+                "surface-container-high": "#1b2028",
+                "surface-container": "#151a21",
+                "on-secondary": "#00575b",
+                "surface-tint": "#ca98ff",
+                "surface-container-lowest": "#000000",
+                "primary-fixed": "#c185ff",
+                "surface-container-low": "#0f141a",
+                "on-background": "#f1f3fc",
+                "on-tertiary-fixed": "#320032",
+                "on-secondary-container": "#dffdff",
+                "on-surface": "#f1f3fc",
+                "on-tertiary-container": "#230023",
+                "on-secondary-fixed-variant": "#006266",
+                "tertiary-dim": "#ff51fa",
+                "error-container": "#a70138",
+                "on-primary-container": "#350062",
+                "surface-variant": "#20262f",
+                "on-surface-variant": "#a8abb3",
+                "surface-bright": "#262c36",
+                "secondary-dim": "#00e5ee",
+                "surface-dim": "#0a0e14",
+                "primary-container": "#c185ff",
+                "on-primary-fixed-variant": "#420078",
+                "inverse-primary": "#8523dd",
+                "primary": "#ca98ff"
+              },
+              fontFamily: {
+                "headline": ["Manrope"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>.material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24
+    }
+.glass-panel {
+    background: rgba(27, 32, 40, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px)
+    }
+.bg-map-pattern {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBm3IiRYiSZ2wS-DyfBgsOzE8V5ODJN17c4vJAOSBq5gpP3GifGKOb9mvQFov6gKc-JQG-tnIVhAviVjmMQj7TCEapuLgAy2CphOmYnZWRuziPLsp-E-y9rMSjVc2MgGwfiTfKkk0Jve22pOdPGQi8GOpNz2Qk4QagjPiFbPauXMagWjQTC39JQcvrliA5rukXAnGLLc9Ilp9l4xS72vVhjEZCLdizwzx_7Nlg7-RzCyWX4g5uLdbvJl971gzmfhTc2MRH1Aa4E8d4);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    filter: grayscale(100%) invert(100%)
+    }
+.glow-accent {
+    box-shadow: 0 0 60px 10px rgba(202, 152, 255, 0.08)
+    }</style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased selection:bg-primary/30 min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Ambient Background -->
+<div class="absolute inset-0 bg-map-pattern pointer-events-none" data-alt="Dark stylized cartography map of a dense city grid with neon purple highlights and deep obsidian tones" data-location="New York City" style=""></div>
+<div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-tertiary/10 rounded-full blur-[120px]"></div>
+<!-- Main Content Container -->
+<main class="relative z-10 w-full max-w-md px-6 flex flex-col items-center">
+<!-- Logo Branding -->
+<div class="mb-10 text-center">
+<h1 class="font-headline text-4xl font-extrabold tracking-tighter text-on-surface flex items-center gap-2">
+<span class="text-primary material-symbols-outlined text-4xl" data-icon="layers">layers</span>
+                CityLayer
+            </h1>
+<p class="font-label text-[0.6875rem] uppercase tracking-[0.2em] text-on-surface-variant mt-2">The Digital Curator</p>
+</div>
+<!-- Login Card -->
+<div class="glass-panel w-full border border-outline-variant/20 rounded-xl p-8 shadow-2xl glow-accent overflow-hidden relative">
+<!-- Welcome Header -->
+<div class="mb-8">
+<h2 class="font-headline text-2xl font-bold tracking-tight text-on-surface">Welcome back</h2>
+<p class="text-on-surface-variant mt-1 text-sm">Access your personalized city gallery.</p>
+</div>
+<form class="space-y-6">
+<!-- Email Field -->
+<div class="space-y-2">
+<label class="font-label text-[0.6875rem] uppercase tracking-wider text-on-surface-variant block ml-1" for="email">Email Address</label>
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors text-xl" data-icon="mail">mail</span>
+</div>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-lg py-3.5 pl-12 pr-4 focus:ring-0 focus:border-primary/50 focus:bg-surface-container-low transition-all placeholder:text-on-surface-variant/40" id="email" placeholder="curator@citylayer.com" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="font-label text-[0.6875rem] uppercase tracking-wider text-on-surface-variant block ml-1" for="password">Password</label>
+<a class="text-[0.6875rem] font-semibold text-secondary hover:text-secondary-fixed transition-colors" href="#">Forgot Password?</a>
+</div>
+<div class="relative group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors text-xl" data-icon="lock">lock</span>
+</div>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/30 text-on-surface rounded-lg py-3.5 pl-12 pr-4 focus:ring-0 focus:border-primary/50 focus:bg-surface-container-low transition-all placeholder:text-on-surface-variant/40" id="password" placeholder="••••••••" type="password"/>
+<div class="absolute inset-y-0 right-4 flex items-center">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Primary Action -->
+<div class="pt-2">
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary-container font-headline font-bold rounded-full shadow-lg shadow-primary/20 hover:shadow-primary/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300" type="submit">
+                        Log in
+                    </button>
+</div>
+</form>
+<!-- Social/Secondary Entry -->
+<div class="mt-8">
+<div class="relative flex items-center justify-center mb-6">
+<div class="w-full h-[1px] bg-outline-variant/20"></div>
+<span class="absolute px-4 bg-[#1b2028] text-[0.6875rem] font-label uppercase tracking-widest text-on-surface-variant">or continue with</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center gap-3 py-3 px-4 border border-outline-variant/20 rounded-lg bg-surface-container/50 hover:bg-surface-container-highest transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-xl" data-icon="google" style="font-variation-settings: 'FILL' 1;">google</span>
+                        Google
+                    </button>
+<button class="flex items-center justify-center gap-3 py-3 px-4 border border-outline-variant/20 rounded-lg bg-surface-container/50 hover:bg-surface-container-highest transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-xl" data-icon="apple" style="font-variation-settings: 'FILL' 1;">ios</span>
+                        Apple
+                    </button>
+</div>
+</div>
+</div>
+<!-- Signup Footer Link -->
+<p class="mt-8 text-on-surface-variant text-sm">
+            Don't have an account? 
+            <a class="text-primary font-bold hover:underline underline-offset-4 ml-1" href="#">Sign Up for free</a>
+</p>
+</main>
+<!-- Global Footer (Suppressed for focused login task, showing minimal version) -->
+<footer class="absolute bottom-0 w-full py-8 px-12 flex flex-col md:flex-row justify-between items-center border-t border-outline-variant/10">
+<p class="font-label text-[0.6875rem] uppercase tracking-[0.05em] text-on-surface-variant">© 2024 CityLayer. The Digital Curator.</p>
+<div class="flex gap-8 mt-4 md:mt-0">
+<a class="font-label text-[0.6875rem] uppercase tracking-[0.05em] text-on-surface-variant hover:text-secondary transition-colors" href="#">Privacy</a>
+<a class="font-label text-[0.6875rem] uppercase tracking-[0.05em] text-on-surface-variant hover:text-secondary transition-colors" href="#">Terms</a>
+<a class="font-label text-[0.6875rem] uppercase tracking-[0.05em] text-on-surface-variant hover:text-secondary transition-colors" href="#">Contact</a>
+</div>
+</footer>
+</body></html>

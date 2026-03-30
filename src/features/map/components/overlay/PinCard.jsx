@@ -2,6 +2,14 @@ function formatCoordinate(value) {
   return Number(value || 0).toFixed(3);
 }
 
+function getPinSummary(pin) {
+  if (pin.type === 'event') {
+    return pin.eventDate ? `Event on ${pin.eventDate}` : 'Community event';
+  }
+
+  return pin.category ? `${pin.category} place` : 'Community place';
+}
+
 export function PinCard({
   pin,
   isSaved,
@@ -16,13 +24,18 @@ export function PinCard({
   }
 
   const categoryLabel = pin.category || (pin.type === 'event' ? 'Live Event' : 'City Favorite');
-  const typeLabel = pin.type === 'event' ? 'Event Pin' : 'Place Pin';
+  const typeLabel = pin.type === 'event' ? 'Event' : 'Place';
   const cityLabel = pin.city ? pin.city.toUpperCase() : 'BAKU';
   const coordinateLabel = `${formatCoordinate(pin.lat || pin.coordinates?.[0])}, ${formatCoordinate(pin.lng || pin.coordinates?.[1])}`;
   const detailItems = [
     { label: 'Category', value: pin.category || 'General' },
     { label: 'Created By', value: pin.createdBy || 'Community member' },
-    ...(pin.type === 'event' ? [{ label: 'Event Date', value: pin.eventDate || 'TBD' }] : []),
+    ...(pin.type === 'event'
+      ? [
+          { label: 'Event Date', value: pin.eventDate || 'TBD' },
+          { label: 'Start Time', value: pin.startTime || 'Not set' },
+        ]
+      : [{ label: 'Pin Type', value: 'Place' }]),
   ];
 
   return (
@@ -53,7 +66,7 @@ export function PinCard({
                 <span className="map-status-dot map-status-live" />
                 <span>{categoryLabel}</span>
               </div>
-              <span className="map-pin-distance">{pin.type === 'event' ? 'Community event' : 'Saved place'}</span>
+              <span className="map-pin-distance">{getPinSummary(pin)}</span>
             </div>
             <button
               type="button"
@@ -92,7 +105,7 @@ export function PinCard({
 
           <div className="map-pin-card-actions">
             <button type="button" className="map-primary-button" onClick={onDirectionsClick}>
-              Assign New Pin
+              Open Directions
             </button>
             <button type="button" className="map-card-icon-button" onClick={onShareClick} aria-label="Share pin">
               <span className="material-symbols-outlined" aria-hidden="true">share</span>
