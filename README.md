@@ -1,65 +1,103 @@
-# CityLayer MVP (Foundation)
+# CityLayer
 
-CityLayer is a community-driven, map-based discovery app for Baku.
+CityLayer is a community-driven city discovery platform that helps people find local events and underrated places on a live map.
 
-This initial scaffold includes:
-- Vite + React setup
-- Routing and layout shell
-- Map/Auth/Add Pin page shells
-- Firebase config module with environment placeholders
-- Reusable, feature-oriented folder structure
+![App Screenshot](./screenshot.png)
 
-## 1) Prerequisites
+---
 
-- Node.js 20+ recommended
-- npm 10+
+## 🚀 What it does
 
-## 2) Install
+CityLayer turns the city into a shared, real-time map where users can:
 
-```bash
+- discover events happening around them  
+- find underrated places others recommend  
+- add their own pins to share with the community  
+
+Instead of scattered social posts, everything lives in one map.
+
+---
+
+## ✨ Current Features
+
+- Interactive Leaflet map centered on Baku  
+- Real-time pins loaded from Firestore  
+- Add new pins (events or places)  
+- Firebase Authentication (email/password)  
+- Filter pins by type (events / places)  
+- Pin detail popup with information  
+- Responsive layout  
+- Environment-based Firebase config  
+
+---
+
+## 🧱 Tech Stack
+
+- React (Vite)
+- Firebase (Auth, Firestore)
+- Leaflet (React Leaflet)
+- React Router
+- Tailwind CSS
+
+---
+
+## 🛠️ Setup
+
+1. Install dependencies:
 npm install
-npm install react-router-dom firebase leaflet react-leaflet
-```
 
-## 3) Environment setup
+2. Create environment file:
+Copy .env.example to .env and fill Firebase config
 
-1. Copy [.env.example](.env.example) to `.env`.
-2. Add Firebase project values.
-
-## 4) Run locally
-
-```bash
+3. Run:
 npm run dev
-```
 
-## 5) Current routes
+---
 
-- `/` → Map page shell
-- `/auth` → Auth page shell
-- `/add-pin` → Add pin page shell
+## 🔥 Firebase Setup
 
-## 6) Next implementation phase
+- Create project in Firebase Console  
+- Add Web App  
+- Copy config to .env  
+- Enable Auth (Email/Password)  
+- Enable Firestore  
 
-- Firebase Auth wiring
-- Leaflet map integration (Baku center)
-- Firestore pins read/create
-- Basic filtering and pin detail UI
+---
 
-## Project structure
+## 📁 Project Structure
 
-```text
 src/
   app/
-    providers/
-    router.jsx
   components/
-    layout/
   config/
-    firebase.js
   features/
     auth/
     map/
     pins/
   pages/
-  styles/
-```
+
+---
+
+## 🧠 Architecture
+
+- Feature-based structure
+- Firebase separated from UI
+- Map loads first, data loads after
+- UI overlays on map
+
+---
+
+## 🗺️ Roadmap
+
+- Map click → auto-fill location  
+- Category filters  
+- Image upload  
+- Profiles  
+- Realtime updates  
+- Mobile app  
+
+---
+
+## 📌 Status
+
+Actively in development
