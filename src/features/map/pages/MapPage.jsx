@@ -58,13 +58,17 @@ export function MapPage() {
           <h2 className="section-title">Loading map pins...</h2>
           <p className="muted">Fetching live pins from Firestore.</p>
         </section>
-      ) : visiblePins.length > 0 ? (
-        <CityMap pins={visiblePins} onMapClick={setSelectedCoordinates} />
       ) : (
-        <section className="card stack-sm">
-          <h2 className="section-title">No pins yet</h2>
-          <p className="muted">Be the first to add a place or event.</p>
-        </section>
+        <>
+          <CityMap pins={visiblePins} onMapClick={setSelectedCoordinates} />
+
+          {visiblePins.length === 0 ? (
+            <section className="card stack-sm">
+              <h2 className="section-title">No pins yet</h2>
+              <p className="muted">Be the first to add a place or event.</p>
+            </section>
+          ) : null}
+        </>
       )}
 
       <section className="card map-feedback-panel">
