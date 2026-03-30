@@ -1,28 +1,52 @@
+import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
-import { MapPage } from '../features/map/pages/MapPage';
-import { AuthPage } from '../features/auth/pages/AuthPage';
-import { AddPinPage } from '../features/pins/pages/AddPinPage';
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
-import { NotFoundPage } from '../pages/NotFoundPage';
+
+const MapPage = lazy(() =>
+  import('../features/map/pages/MapPage').then((module) => ({ default: module.MapPage }))
+);
+const AuthPage = lazy(() =>
+  import('../features/auth/pages/AuthPage').then((module) => ({ default: module.AuthPage }))
+);
+const AddPinPage = lazy(() =>
+  import('../features/pins/pages/AddPinPage').then((module) => ({ default: module.AddPinPage }))
+);
+const NotFoundPage = lazy(() =>
+  import('../pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
+);
+
+function RouteLoadingFallback() {
+  return (
+    <section className="route-loading-shell">
+      <div className="route-loading-card">
+        <span className="route-loading-kicker">Loading</span>
+        <h1>Preparing the next view...</h1>
+        <p>We are loading the map experience and connected tools.</p>
+      </div>
+    </section>
+  );
+}
 
 export function AppRouter() {
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<MapPage />} />
-        <Route path="/auth" element={<AuthPage />} />
-        <Route
-          path="/add-pin"
-          element={
-            <ProtectedRoute>
-              <AddPinPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/home" element={<Navigate to="/" replace />} />
-      </Route>
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<MapPage />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route
+            path="/add-pin"
+            element={
+              <ProtectedRoute>
+                <AddPinPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/home" element={<Navigate to="/" replace />} />
+        </Route>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 }

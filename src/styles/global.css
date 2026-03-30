@@ -98,6 +98,50 @@ textarea {
   margin-inline: auto;
 }
 
+.route-loading-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.12), transparent 26%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.route-loading-card {
+  width: min(100%, 28rem);
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.4rem 1.5rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.route-loading-card h1 {
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.route-loading-card p {
+  color: #475569;
+}
+
+.route-loading-kicker {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .header {
   position: sticky;
   top: 0;
@@ -546,6 +590,17 @@ pre {
   text-align: left;
 }
 
+.map-sidebar-meta {
+  margin-left: auto;
+  min-width: 1.75rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: inherit;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
 .map-sidebar-link.is-active {
   color: #f8fafc;
   background: rgba(139, 92, 246, 0.22);
@@ -604,6 +659,25 @@ pre {
   background: linear-gradient(135deg, var(--map-ui-accent), var(--map-primary));
   color: #f8fafc;
   box-shadow: 0 14px 24px rgba(91, 33, 182, 0.28);
+}
+
+.map-filter-chip-secondary {
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--map-text);
+}
+
+.map-filter-spacer {
+  flex: 1;
+}
+
+.map-filter-count {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--map-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .map-alert,
@@ -680,6 +754,10 @@ pre {
   letter-spacing: 0.05em;
 }
 
+.map-floating-pill-label {
+  display: inline;
+}
+
 .map-zoom-controls {
   position: absolute;
   right: 1.5rem;
@@ -730,6 +808,10 @@ pre {
   box-shadow: var(--map-shadow);
 }
 
+.map-pin-card-handle {
+  display: none;
+}
+
 .map-pin-card-cover {
   min-height: 12.5rem;
   position: relative;
@@ -741,6 +823,11 @@ pre {
     radial-gradient(circle at top left, rgba(139, 92, 246, 0.44), transparent 38%),
     linear-gradient(135deg, #020617 0%, #111827 48%, #312e81 100%);
   color: #fff;
+}
+
+.map-pin-card-expandable {
+  display: grid;
+  gap: 1rem;
 }
 
 .map-pin-card-cover::after {
@@ -804,9 +891,10 @@ pre {
 
 .map-pin-card-row,
 .map-pin-card-actions,
-.map-rating-row,
+.map-status-row,
 .map-pin-tag-row,
-.map-pin-meta {
+.map-pin-meta,
+.map-pin-location-row {
   display: flex;
   align-items: center;
 }
@@ -817,10 +905,28 @@ pre {
   gap: 0.75rem;
 }
 
-.map-rating-row {
+.map-status-row {
   gap: 0.3rem;
-  color: #f59e0b;
+  color: var(--map-text);
   font-weight: 800;
+  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+}
+
+.map-status-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.map-status-live {
+  background: var(--map-ui-success);
+  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.12);
+}
+
+.map-status-muted {
+  background: #94a3b8;
 }
 
 .map-pin-distance,
@@ -859,6 +965,47 @@ pre {
   flex-wrap: wrap;
 }
 
+.map-pin-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.map-pin-detail-item {
+  padding: 0.8rem 0.85rem;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.42);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.map-pin-detail-item dt {
+  margin: 0 0 0.3rem;
+  color: var(--map-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.map-pin-detail-item dd {
+  margin: 0;
+  color: var(--map-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.map-pin-location-row {
+  gap: 0.45rem;
+  color: var(--map-text-muted);
+  font-size: 0.84rem;
+  flex-wrap: wrap;
+}
+
+.map-pin-location-separator {
+  opacity: 0.65;
+}
+
 .map-primary-button {
   flex: 1;
   border: none;
@@ -876,6 +1023,11 @@ pre {
   height: 3rem;
   border-radius: 999px;
   color: var(--map-text);
+}
+
+.map-card-icon-button.is-saved {
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.12);
 }
 
 .map-marker-wrapper {
@@ -914,12 +1066,43 @@ pre {
   min-width: 220px;
 }
 
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: rgba(15, 23, 42, 0.96);
+  color: var(--map-text);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 38px rgba(2, 6, 23, 0.34);
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 1rem;
+  backdrop-filter: blur(16px);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  padding: 1rem;
+  min-width: 220px;
+}
+
+.leaflet-popup-close-button {
+  color: var(--map-text-muted) !important;
+  top: 0.55rem !important;
+  right: 0.55rem !important;
+}
+
+.leaflet-popup-close-button:hover {
+  color: var(--map-text) !important;
+}
+
 .popup-title {
   font-size: 1rem;
+  color: var(--map-text);
 }
 
 .popup-description {
   margin-top: 0.25rem;
+  color: var(--map-text-muted);
 }
 
 .popup-meta {
@@ -935,12 +1118,12 @@ pre {
 }
 
 .popup-meta dt {
-  color: #667085;
+  color: var(--map-text-muted);
 }
 
 .popup-meta dd {
   margin: 0;
-  color: #101828;
+  color: var(--map-text);
   text-align: right;
 }
 
@@ -957,13 +1140,13 @@ pre {
 }
 
 .pin-badge-event {
-  background: #fee4e2;
-  color: #b42318;
+  background: rgba(248, 113, 113, 0.18);
+  color: #fda4af;
 }
 
 .pin-badge-place {
-  background: #d1e9ff;
-  color: #175cd3;
+  background: rgba(96, 165, 250, 0.18);
+  color: #93c5fd;
 }
 
 .map-mobile-only {
@@ -987,6 +1170,11 @@ pre {
     transform: translateX(calc(-100% - 1rem));
     transition: transform 0.24s ease;
     border-radius: 2rem;
+    width: min(22rem, calc(100vw - 1.5rem));
+    top: 0.75rem;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    padding-top: 5.6rem;
   }
 
   .map-sidebar.is-open {
@@ -1003,6 +1191,7 @@ pre {
   .map-filter-bar {
     right: 1rem;
     top: 6.8rem;
+    padding-right: 0.75rem;
   }
 
   .map-floating-actions {
@@ -1074,6 +1263,11 @@ pre {
     margin-left: auto;
   }
 
+  .map-login-button span:last-child,
+  .map-floating-pill-label {
+    display: none;
+  }
+
   .map-user-meta {
     display: none;
   }
@@ -1082,46 +1276,64 @@ pre {
     top: 8.9rem;
     padding-inline: 0.75rem;
     border-radius: 1.25rem;
+    left: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .map-filter-spacer,
+  .map-filter-count {
+    display: none;
   }
 
   .map-alert,
   .map-loading-panel {
-    width: calc(100vw - 2rem);
+    left: 0.75rem;
+    width: calc(100vw - 1.5rem);
     font-size: 0.86rem;
   }
 
   .map-alert-success,
   .map-alert-error {
-    top: 13.2rem;
+    top: 13.35rem;
   }
 
   .map-alert-info {
-    top: 16.6rem;
+    top: 17rem;
   }
 
   .map-loading-panel {
-    top: 20rem;
+    top: 20.65rem;
   }
 
   .map-floating-actions {
     top: auto;
-    right: 1rem;
-    bottom: 8.25rem;
+    right: 0.75rem;
+    bottom: 5.25rem;
     flex-direction: row;
   }
 
   .map-floating-pill {
-    padding-inline: 1rem;
+    width: 3.5rem;
+    padding-inline: 0;
+    justify-content: center;
+  }
+
+  .map-zoom-controls {
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 
   .map-pin-card-wrapper {
-    right: 1rem;
-    bottom: 1rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
     width: auto;
+    max-width: none;
   }
 
   .map-pin-card-cover {
-    min-height: 10.5rem;
+    min-height: 9.2rem;
+    padding-top: 1.5rem;
   }
 
   .map-pin-card-cover-content h2 {
@@ -1135,5 +1347,44 @@ pre {
   .map-pin-meta {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .map-pin-details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .map-pin-card {
+    border-radius: 1.25rem;
+  }
+
+  .map-pin-card-handle {
+    width: 100%;
+    display: grid;
+    place-items: center;
+    padding: 0.5rem 0 0.15rem;
+    border: none;
+    background: transparent;
+  }
+
+  .map-pin-card-grip {
+    width: 3rem;
+    height: 0.28rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.38);
+  }
+
+  .map-pin-card-expandable {
+    overflow: hidden;
+    transition: max-height 0.24s ease, opacity 0.24s ease;
+  }
+
+  .map-pin-card-wrapper.is-collapsed .map-pin-card-expandable {
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .map-pin-card-wrapper.is-expanded .map-pin-card-expandable {
+    max-height: 20rem;
+    opacity: 1;
   }
 }

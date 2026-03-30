@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
-  { id: 'discover', label: 'Discover', icon: 'explore', active: true },
+  { id: 'discover', label: 'Discover', icon: 'explore' },
   { id: 'events', label: 'Events', icon: 'event_note' },
   { id: 'saved', label: 'Saved', icon: 'bookmark' },
   { id: 'collections', label: 'Collections', icon: 'layers' },
 ];
 
-export function Sidebar({ isOpen, onClose, isAuthenticated }) {
+export function Sidebar({ isOpen, onClose, isAuthenticated, activeSection, onSectionChange, sectionMeta }) {
   return (
     <>
       <div
@@ -21,10 +21,15 @@ export function Sidebar({ isOpen, onClose, isAuthenticated }) {
             <button
               key={item.id}
               type="button"
-              className={`map-sidebar-link ${item.active ? 'is-active' : ''}`.trim()}
+              className={`map-sidebar-link ${activeSection === item.id ? 'is-active' : ''}`.trim()}
+              onClick={() => {
+                onSectionChange(item.id);
+                onClose();
+              }}
             >
               <span className="material-symbols-outlined" aria-hidden="true">{item.icon}</span>
               <span>{item.label}</span>
+              <span className="map-sidebar-meta">{sectionMeta?.[item.id] ?? ''}</span>
             </button>
           ))}
 

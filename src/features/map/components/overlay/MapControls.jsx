@@ -7,7 +7,7 @@ export function MapControls({ onLocate, onZoomIn, onZoomOut, onToggleSidebar }) 
         </button>
         <button type="button" className="map-floating-pill" onClick={onToggleSidebar}>
           <span className="material-symbols-outlined" aria-hidden="true">format_list_bulleted</span>
-          <span>LIST VIEW</span>
+          <span className="map-floating-pill-label">LIST VIEW</span>
         </button>
       </div>
 

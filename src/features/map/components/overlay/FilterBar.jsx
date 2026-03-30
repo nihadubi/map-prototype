@@ -1,4 +1,4 @@
-export function FilterBar({ filters, activeFilter, onFilterChange, isVisible }) {
+export function FilterBar({ filters, activeFilter, onFilterChange, isVisible, resultCount, onReset }) {
   return (
     <section className={`map-filter-bar ${isVisible ? 'is-visible' : 'is-hidden'}`.trim()} aria-label="Map filters">
       {filters.map((filter) => (
@@ -11,6 +11,12 @@ export function FilterBar({ filters, activeFilter, onFilterChange, isVisible }) 
           {filter.label}
         </button>
       ))}
+
+      <div className="map-filter-spacer" />
+      <span className="map-filter-count">{resultCount} results</span>
+      <button type="button" className="map-filter-chip map-filter-chip-secondary" onClick={onReset}>
+        RESET
+      </button>
     </section>
   );
 }

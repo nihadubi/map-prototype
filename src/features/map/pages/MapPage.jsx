@@ -9,6 +9,8 @@ import { PinCard } from '../components/overlay/PinCard';
 import { Sidebar } from '../components/overlay/Sidebar';
 import { subscribeToPins } from '../../pins/services/pins.service';
 
+const SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
+
 function buildFilterOptions(pins) {
   const categoryFilters = Array.from(
     new Set(pins.map((pin) => pin.category).filter(Boolean))
@@ -38,10 +40,25 @@ function matchesSearch(pin, query) {
     .some((value) => value.toLowerCase().includes(normalized));
 }
 
+function readSavedPinIds() {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(SAVED_PINS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    console.error('Failed to read saved pins:', error);
+    return [];
+  }
+}
+
 export function MapPage() {
   const navigate = useNavigate();
   const { user, isAuthLoading, isAuthenticated, logout } = useAuth();
   const [searchParams] = useSearchParams();
+  const [activeSection, setActiveSection] = useState('discover');
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
@@ -52,6 +69,8 @@ export function MapPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const [mapActions, setMapActions] = useState(null);
+  const [savedPinIds, setSavedPinIds] = useState(readSavedPinIds);
+  const [isPinCardExpanded, setIsPinCardExpanded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
@@ -71,16 +90,34 @@ export function MapPage() {
 
   const createdPinId = searchParams.get('createdPinId');
 
-  const filterOptions = useMemo(() => buildFilterOptions(pins), [pins]);
+  useEffect(() => {
+    window.localStorage.setItem(SAVED_PINS_STORAGE_KEY, JSON.stringify(savedPinIds));
+  }, [savedPinIds]);
+
+  const basePins = useMemo(() => {
+    switch (activeSection) {
+      case 'events':
+        return pins.filter((pin) => pin.type === 'event');
+      case 'saved':
+        return pins.filter((pin) => savedPinIds.includes(pin.id));
+      case 'collections':
+        return pins.filter((pin) => pin.type === 'place');
+      case 'discover':
+      default:
+        return pins;
+    }
+  }, [activeSection, pins, savedPinIds]);
+
+  const filterOptions = useMemo(() => buildFilterOptions(basePins), [basePins]);
 
   const visiblePins = useMemo(() => {
-    return pins.filter((pin) => {
+    return basePins.filter((pin) => {
       const matchesFilter =
         activeFilter === 'all' || pin.type === activeFilter || pin.category === activeFilter;
 
       return matchesFilter && matchesSearch(pin, searchQuery);
     });
-  }, [activeFilter, pins, searchQuery]);
+  }, [activeFilter, basePins, searchQuery]);
 
   const createdPin = useMemo(
     () => pins.find((pin) => pin.id === createdPinId) || null,
@@ -115,6 +152,34 @@ export function MapPage() {
 
   function handlePinSelect(pin) {
     setSelectedPinId(pin.id);
+    setIsPinCardExpanded(true);
+  }
+
+  function handleSectionChange(section) {
+    setActiveSection(section);
+    setSearchQuery('');
+    setIsFilterBarVisible(true);
+    setIsPinCardExpanded(false);
+
+    if (section === 'events') {
+      setActiveFilter('event');
+      return;
+    }
+
+    setActiveFilter('all');
+  }
+
+  function handleResetFilters() {
+    setActiveFilter(activeSection === 'events' ? 'event' : 'all');
+    setSearchQuery('');
+  }
+
+  function handleToggleSaved(pinId) {
+    setSavedPinIds((current) => (
+      current.includes(pinId)
+        ? current.filter((id) => id !== pinId)
+        : [...current, pinId]
+    ));
   }
 
   function handleDirectionsClick() {
@@ -151,6 +216,13 @@ export function MapPage() {
     }
   }
 
+  const sectionMeta = useMemo(() => ({
+    discover: `${pins.length}`,
+    events: `${pins.filter((pin) => pin.type === 'event').length}`,
+    saved: `${savedPinIds.filter((id) => pins.some((pin) => pin.id === id)).length}`,
+    collections: `${new Set(pins.filter((pin) => pin.type === 'place').map((pin) => pin.category)).size}`,
+  }), [pins, savedPinIds]);
+
   return (
     <section className="map-screen">
       <CityMap
@@ -179,6 +251,9 @@ export function MapPage() {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
           isAuthenticated={isAuthenticated}
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          sectionMeta={sectionMeta}
         />
 
         <FilterBar
@@ -186,6 +261,8 @@ export function MapPage() {
           activeFilter={activeFilter}
           onFilterChange={setActiveFilter}
           isVisible={isFilterBarVisible}
+          resultCount={visiblePins.length}
+          onReset={handleResetFilters}
         />
 
         {pinsError ? <div className="map-alert map-alert-error">{pinsError}</div> : null}
@@ -213,8 +290,12 @@ export function MapPage() {
 
         <PinCard
           pin={selectedPin}
+          isSaved={selectedPin ? savedPinIds.includes(selectedPin.id) : false}
+          isExpanded={isPinCardExpanded}
+          onToggleExpanded={() => setIsPinCardExpanded((current) => !current)}
           onDirectionsClick={handleDirectionsClick}
           onShareClick={handleShareClick}
+          onToggleSaved={() => selectedPin && handleToggleSaved(selectedPin.id)}
         />
       </div>
     </section>
