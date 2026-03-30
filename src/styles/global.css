@@ -15,12 +15,16 @@
   --map-secondary: #4647d3;
   --map-tertiary: #8e3a8a;
   --map-surface: #f5f7f9;
-  --map-panel: rgba(255, 255, 255, 0.88);
-  --map-panel-strong: rgba(255, 255, 255, 0.94);
-  --map-text: #2c2f31;
-  --map-text-muted: #595c5e;
-  --map-border: rgba(171, 173, 175, 0.35);
-  --map-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  --map-panel: rgba(11, 18, 32, 0.78);
+  --map-panel-strong: rgba(15, 23, 42, 0.92);
+  --map-panel-soft: rgba(17, 25, 40, 0.72);
+  --map-text: #f8fafc;
+  --map-text-muted: #94a3b8;
+  --map-border: rgba(148, 163, 184, 0.22);
+  --map-shadow: 0 24px 60px rgba(2, 6, 23, 0.42);
+  --map-ui-accent: #8b5cf6;
+  --map-ui-accent-soft: rgba(139, 92, 246, 0.22);
+  --map-ui-success: #34d399;
 }
 
 * {
@@ -304,7 +308,7 @@ pre {
 
 .map-screen .leaflet-container {
   background: #dfe3e6;
-  filter: saturate(0.86) contrast(0.96);
+  filter: none;
 }
 
 .map-screen .leaflet-control-container {
@@ -312,15 +316,16 @@ pre {
 }
 
 .map-screen .leaflet-tile {
-  filter: grayscale(0.2) brightness(1.02);
+  filter: none;
 }
 
 .map-screen::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at top left, rgba(161, 159, 249, 0.16), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(44, 47, 49, 0.12));
+  background:
+    radial-gradient(circle at top left, rgba(15, 23, 42, 0.04), transparent 32%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(15, 23, 42, 0.08));
   pointer-events: none;
   z-index: 1;
 }
@@ -328,7 +333,7 @@ pre {
 .map-overlay-shell {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 1000;
   pointer-events: none;
 }
 
@@ -351,11 +356,11 @@ pre {
   gap: 1rem;
   justify-content: space-between;
   padding: 0.8rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid var(--map-border);
+  background: var(--map-panel);
   backdrop-filter: blur(20px);
   border-radius: 1.75rem;
-  box-shadow: 0 20px 40px rgba(148, 146, 235, 0.12);
+  box-shadow: var(--map-shadow);
 }
 
 .map-header-leading {
@@ -370,7 +375,7 @@ pre {
   font-size: 1.3rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: #1e1b4b;
+  color: var(--map-text);
 }
 
 .map-search {
@@ -381,13 +386,14 @@ pre {
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: 999px;
-  background: rgba(238, 241, 243, 0.95);
-  border: 1px solid transparent;
+  background: rgba(15, 23, 42, 0.68);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: var(--map-text);
 }
 
 .map-search:focus-within {
-  border-color: rgba(83, 82, 165, 0.2);
-  box-shadow: 0 0 0 4px rgba(83, 82, 165, 0.08);
+  border-color: rgba(139, 92, 246, 0.42);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
 }
 
 .map-search input {
@@ -400,7 +406,7 @@ pre {
 }
 
 .map-search input::placeholder {
-  color: #667085;
+  color: var(--map-text-muted);
 }
 
 .map-header-actions,
@@ -418,9 +424,10 @@ pre {
   align-items: center;
   justify-content: center;
   border: none;
-  color: var(--map-primary);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+  color: var(--map-text);
+  background: var(--map-panel-soft);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.3);
 }
 
 .map-icon-button {
@@ -486,7 +493,7 @@ pre {
 .map-sidebar-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.2);
+  background: rgba(2, 6, 23, 0.48);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -508,11 +515,11 @@ pre {
   flex-direction: column;
   justify-content: space-between;
   padding: 6.2rem 1rem 1rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--map-panel-strong);
   backdrop-filter: blur(22px);
   border-radius: 0 2rem 2rem 0;
   box-shadow: var(--map-shadow);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--map-border);
   z-index: 15;
 }
 
@@ -532,7 +539,7 @@ pre {
   text-decoration: none;
   border: none;
   background: transparent;
-  color: #667085;
+  color: var(--map-text-muted);
   font-family: Manrope, sans-serif;
   font-size: 0.92rem;
   font-weight: 700;
@@ -540,16 +547,16 @@ pre {
 }
 
 .map-sidebar-link.is-active {
-  color: #4338ca;
-  background: rgba(238, 242, 255, 0.9);
+  color: #f8fafc;
+  background: rgba(139, 92, 246, 0.22);
 }
 
 .map-sidebar-cta {
   justify-content: center;
   margin-top: 1rem;
   color: #fff;
-  background: var(--map-primary);
-  box-shadow: 0 18px 32px rgba(83, 82, 165, 0.24);
+  background: linear-gradient(135deg, var(--map-ui-accent), var(--map-primary));
+  box-shadow: 0 18px 32px rgba(91, 33, 182, 0.36);
 }
 
 .map-filter-bar {
@@ -565,7 +572,8 @@ pre {
   border-radius: 999px;
   background: var(--map-panel);
   backdrop-filter: blur(20px);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--map-border);
+  box-shadow: var(--map-shadow);
   scrollbar-width: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
@@ -585,17 +593,17 @@ pre {
   white-space: nowrap;
   border-radius: 999px;
   padding: 0.72rem 1.1rem;
-  background: rgba(217, 221, 224, 0.7);
-  color: #595c5e;
+  background: rgba(30, 41, 59, 0.82);
+  color: var(--map-text-muted);
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
 .map-filter-chip.is-active {
-  background: var(--map-primary);
-  color: #f4f1ff;
-  box-shadow: 0 14px 24px rgba(83, 82, 165, 0.2);
+  background: linear-gradient(135deg, var(--map-ui-accent), var(--map-primary));
+  color: #f8fafc;
+  box-shadow: 0 14px 24px rgba(91, 33, 182, 0.28);
 }
 
 .map-alert,
@@ -612,8 +620,8 @@ pre {
 }
 
 .map-alert {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: var(--map-panel);
+  border: 1px solid var(--map-border);
   color: var(--map-text);
 }
 
@@ -623,18 +631,19 @@ pre {
 
 .map-alert-error {
   top: 10.5rem;
-  color: #9f0519;
+  color: #fda4af;
 }
 
 .map-alert-info {
   top: 14rem;
-  color: #1d4ed8;
+  color: #93c5fd;
 }
 
 .map-loading-panel {
   top: 17.5rem;
-  color: #475467;
-  background: rgba(255, 255, 255, 0.88);
+  color: var(--map-text-muted);
+  background: var(--map-panel);
+  border: 1px solid var(--map-border);
 }
 
 .map-floating-actions {
@@ -663,7 +672,8 @@ pre {
   border-radius: 999px;
   background: var(--map-panel-strong);
   color: var(--map-text);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--map-border);
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.28);
   font-family: Manrope, sans-serif;
   font-size: 0.85rem;
   font-weight: 800;
@@ -684,7 +694,8 @@ pre {
   padding: 0.35rem;
   border-radius: 999px;
   background: var(--map-panel-strong);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--map-border);
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.28);
 }
 
 .map-zoom-button {
@@ -693,14 +704,14 @@ pre {
   border-radius: 999px;
   background: transparent;
   box-shadow: none;
-  color: var(--map-text-muted);
+  color: var(--map-text);
 }
 
 .map-zoom-divider {
   width: 1.4rem;
   height: 1px;
   margin: 0 auto;
-  background: rgba(116, 119, 121, 0.2);
+  background: rgba(148, 163, 184, 0.18);
 }
 
 .map-pin-card-wrapper {
@@ -714,8 +725,8 @@ pre {
 .map-pin-card {
   overflow: hidden;
   border-radius: 1.5rem;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: var(--map-panel-strong);
+  border: 1px solid var(--map-border);
   box-shadow: var(--map-shadow);
 }
 
@@ -726,9 +737,9 @@ pre {
   align-items: flex-end;
   padding: 1.25rem;
   background:
-    radial-gradient(circle at top right, rgba(254, 156, 244, 0.6), transparent 30%),
-    radial-gradient(circle at top left, rgba(161, 159, 249, 0.9), transparent 38%),
-    linear-gradient(135deg, #111827 0%, #374151 48%, #5352a5 100%);
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.32), transparent 30%),
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.44), transparent 38%),
+    linear-gradient(135deg, #020617 0%, #111827 48%, #312e81 100%);
   color: #fff;
 }
 
@@ -751,8 +762,8 @@ pre {
   right: 1rem;
   padding: 0.45rem 0.8rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--map-primary);
+  background: rgba(15, 23, 42, 0.82);
+  color: #c4b5fd;
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -788,6 +799,7 @@ pre {
   display: grid;
   gap: 1rem;
   padding: 1.25rem;
+  color: var(--map-text);
 }
 
 .map-pin-card-row,
@@ -813,7 +825,7 @@ pre {
 
 .map-pin-distance,
 .map-pin-meta {
-  color: #667085;
+  color: var(--map-text-muted);
   font-size: 0.9rem;
 }
 
@@ -832,13 +844,13 @@ pre {
 }
 
 .map-pin-tag-tertiary {
-  background: rgba(254, 156, 244, 0.22);
-  color: #711f6f;
+  background: rgba(217, 70, 239, 0.18);
+  color: #f0abfc;
 }
 
 .map-pin-tag-primary {
-  background: rgba(161, 159, 249, 0.24);
-  color: #201c71;
+  background: rgba(99, 102, 241, 0.2);
+  color: #c7d2fe;
 }
 
 .map-pin-meta {
@@ -852,18 +864,18 @@ pre {
   border: none;
   border-radius: 999px;
   padding: 0.9rem 1.1rem;
-  background: var(--map-primary);
-  color: #f4f1ff;
+  background: linear-gradient(135deg, var(--map-ui-accent), var(--map-primary));
+  color: #f8fafc;
   font-family: Manrope, sans-serif;
   font-weight: 800;
-  box-shadow: 0 18px 32px rgba(83, 82, 165, 0.22);
+  box-shadow: 0 18px 32px rgba(91, 33, 182, 0.34);
 }
 
 .map-card-icon-button {
   width: 3rem;
   height: 3rem;
   border-radius: 999px;
-  color: var(--map-text-muted);
+  color: var(--map-text);
 }
 
 .map-marker-wrapper {

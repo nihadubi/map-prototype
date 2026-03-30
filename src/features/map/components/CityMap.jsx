@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { DEFAULT_MAP_ZOOM, MAP_CENTER_BAKU } from '../constants/mapConfig';
+import { AZERBAIJAN_BOUNDS, DEFAULT_MAP_ZOOM, MAP_CENTER_BAKU } from '../constants/mapConfig';
 
 const markerStyles = {
   event: {
@@ -99,10 +99,21 @@ export function CityMap({ pins, selectedPinId, onMapClick, onPinSelect, onMapRea
 
   return (
     <div className="map-canvas">
-      <MapContainer center={MAP_CENTER_BAKU} zoom={DEFAULT_MAP_ZOOM} scrollWheelZoom className="leaflet-map">
+      <MapContainer
+        center={MAP_CENTER_BAKU}
+        zoom={DEFAULT_MAP_ZOOM}
+        minZoom={7}
+        maxZoom={16}
+        maxBounds={AZERBAIJAN_BOUNDS}
+        maxBoundsViscosity={1}
+        scrollWheelZoom
+        zoomControl={false}
+        className="leaflet-map"
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          noWrap
         />
 
         <MapBridge onMapClick={onMapClick} onMapReady={onMapReady} />
