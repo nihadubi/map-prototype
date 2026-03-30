@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../app/providers/AuthProvider';
+import { useAuth } from '../../../app/providers/useAuth';
 import { AuthForm } from '../components/AuthForm';
 
 function getAuthErrorMessage(error) {

@@ -1,13 +1,29 @@
-import { Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 
 export function AppLayout() {
+  const location = useLocation();
+  const isMapRoute = location.pathname === '/';
+
+  useEffect(() => {
+    document.body.classList.toggle('map-route-body', isMapRoute);
+
+    return () => document.body.classList.remove('map-route-body');
+  }, [isMapRoute]);
+
   return (
-    <div className="app-shell">
-      <Header />
-      <main className="container">
+    <div className={isMapRoute ? 'app-shell app-shell-map' : 'app-shell'}>
+      {isMapRoute ? (
         <Outlet />
-      </main>
+      ) : (
+        <>
+          <Header />
+          <main className="container">
+            <Outlet />
+          </main>
+        </>
+      )}
     </div>
   );
 }

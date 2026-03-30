@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../app/providers/AuthProvider';
+import { useAuth } from '../../../app/providers/useAuth';
 import { PinForm } from '../components/PinForm';
 import { createPin } from '../services/pins.service';
 

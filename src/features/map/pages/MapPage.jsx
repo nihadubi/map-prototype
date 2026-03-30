@@ -1,16 +1,57 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../../app/providers/useAuth';
 import { CityMap } from '../components/CityMap';
-import { MapFilterBar } from '../components/MapFilterBar';
+import { FilterBar } from '../components/overlay/FilterBar';
+import { Header } from '../components/overlay/Header';
+import { MapControls } from '../components/overlay/MapControls';
+import { PinCard } from '../components/overlay/PinCard';
+import { Sidebar } from '../components/overlay/Sidebar';
 import { subscribeToPins } from '../../pins/services/pins.service';
 
+function buildFilterOptions(pins) {
+  const categoryFilters = Array.from(
+    new Set(pins.map((pin) => pin.category).filter(Boolean))
+  )
+    .slice(0, 6)
+    .map((category) => ({
+      value: category,
+      label: category.toUpperCase(),
+    }));
+
+  return [
+    { value: 'all', label: 'ALL' },
+    { value: 'event', label: 'EVENTS' },
+    { value: 'place', label: 'PLACES' },
+    ...categoryFilters,
+  ];
+}
+
+function matchesSearch(pin, query) {
+  if (!query) {
+    return true;
+  }
+
+  const normalized = query.trim().toLowerCase();
+  return [pin.title, pin.description, pin.category, pin.placeType, pin.eventDate]
+    .filter(Boolean)
+    .some((value) => value.toLowerCase().includes(normalized));
+}
+
 export function MapPage() {
+  const navigate = useNavigate();
+  const { user, isAuthLoading, isAuthenticated, logout } = useAuth();
   const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
   const [pins, setPins] = useState([]);
+  const [selectedPinId, setSelectedPinId] = useState(null);
   const [isPinsLoading, setIsPinsLoading] = useState(true);
   const [pinsError, setPinsError] = useState('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
+  const [mapActions, setMapActions] = useState(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
@@ -30,70 +71,152 @@ export function MapPage() {
 
   const createdPinId = searchParams.get('createdPinId');
 
+  const filterOptions = useMemo(() => buildFilterOptions(pins), [pins]);
+
   const visiblePins = useMemo(() => {
-    const basePins = activeFilter === 'all' ? pins : pins.filter((pin) => pin.type === activeFilter);
-    return basePins;
-  }, [activeFilter, pins]);
+    return pins.filter((pin) => {
+      const matchesFilter =
+        activeFilter === 'all' || pin.type === activeFilter || pin.category === activeFilter;
+
+      return matchesFilter && matchesSearch(pin, searchQuery);
+    });
+  }, [activeFilter, pins, searchQuery]);
 
   const createdPin = useMemo(
-    () => visiblePins.find((pin) => pin.id === createdPinId) || pins.find((pin) => pin.id === createdPinId) || null,
-    [createdPinId, pins, visiblePins]
+    () => pins.find((pin) => pin.id === createdPinId) || null,
+    [createdPinId, pins]
   );
 
+  const effectiveSelectedPinId = useMemo(() => {
+    if (selectedPinId && visiblePins.some((pin) => pin.id === selectedPinId)) {
+      return selectedPinId;
+    }
+
+    if (createdPin && visiblePins.some((pin) => pin.id === createdPin.id)) {
+      return createdPin.id;
+    }
+
+    return visiblePins[0]?.id || null;
+  }, [createdPin, selectedPinId, visiblePins]);
+
+  const selectedPin = useMemo(() => {
+    return visiblePins.find((pin) => pin.id === effectiveSelectedPinId)
+      || pins.find((pin) => pin.id === effectiveSelectedPinId)
+      || null;
+  }, [effectiveSelectedPinId, pins, visiblePins]);
+
+  async function handleLogout() {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  }
+
+  function handlePinSelect(pin) {
+    setSelectedPinId(pin.id);
+  }
+
+  function handleDirectionsClick() {
+    if (!selectedPin) {
+      return;
+    }
+
+    const [lat, lng] = selectedPin.coordinates;
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener,noreferrer');
+  }
+
+  async function handleShareClick() {
+    if (!selectedPin) {
+      return;
+    }
+
+    const shareText = `${selectedPin.title} in Baku`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: selectedPin.title,
+          text: shareText,
+          url: window.location.href,
+        });
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${shareText} - ${window.location.href}`);
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+    }
+  }
+
   return (
-    <section className="stack map-page">
-      <div className="stack-sm">
-        <h1>Discover Baku with CityLayer</h1>
-        <p className="muted">
-          Explore community-submitted events and underrated places around the city.
-        </p>
-      </div>
+    <section className="map-screen">
+      <CityMap
+        pins={visiblePins}
+        selectedPinId={effectiveSelectedPinId}
+        onMapClick={setSelectedCoordinates}
+        onPinSelect={handlePinSelect}
+        onMapReady={setMapActions}
+      />
 
-      <MapFilterBar activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+      <div className="map-overlay-shell">
+        <Header
+          query={searchQuery}
+          onQueryChange={setSearchQuery}
+          isSidebarOpen={isSidebarOpen}
+          onMenuClick={() => setIsSidebarOpen((current) => !current)}
+          onFilterClick={() => setIsFilterBarVisible((current) => !current)}
+          isAuthLoading={isAuthLoading}
+          isAuthenticated={isAuthenticated}
+          user={user}
+          onLoginClick={() => navigate('/auth')}
+          onLogoutClick={handleLogout}
+        />
 
-      {pinsError ? <p className="form-error">{pinsError}</p> : null}
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          isAuthenticated={isAuthenticated}
+        />
 
-      {isPinsLoading ? (
-        <section className="card stack-sm">
-          <h2 className="section-title">Loading map pins...</h2>
-          <p className="muted">Fetching live pins from Firestore.</p>
-        </section>
-      ) : (
-        <>
-          <CityMap pins={visiblePins} onMapClick={setSelectedCoordinates} />
+        <FilterBar
+          filters={filterOptions}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          isVisible={isFilterBarVisible}
+        />
 
-          {visiblePins.length === 0 ? (
-            <section className="card stack-sm">
-              <h2 className="section-title">No pins yet</h2>
-              <p className="muted">Be the first to add a place or event.</p>
-            </section>
-          ) : null}
-        </>
-      )}
-
-      <section className="card map-feedback-panel">
-        <div>
-          <h2 className="section-title">Map interaction state</h2>
-          <p className="muted">
-            Clicking the map captures coordinates now so we can feed them into the add-pin flow next.
-          </p>
-        </div>
-
+        {pinsError ? <div className="map-alert map-alert-error">{pinsError}</div> : null}
         {createdPin ? (
-          <p className="success-banner">
+          <div className="map-alert map-alert-success">
             New pin added: <strong>{createdPin.title}</strong> is now live on the map.
-          </p>
+          </div>
+        ) : null}
+        {selectedCoordinates ? (
+          <div className="map-alert map-alert-info">
+            Last map click: {selectedCoordinates.lat}, {selectedCoordinates.lng}
+          </div>
+        ) : null}
+        {isPinsLoading ? <div className="map-loading-panel">Loading live pins from Firestore...</div> : null}
+        {!isPinsLoading && !visiblePins.length ? (
+          <div className="map-loading-panel">No pins match the current search and filters yet.</div>
         ) : null}
 
-        {selectedCoordinates ? (
-          <div className="coordinates-readout">
-            <span>Latitude: {selectedCoordinates.lat}</span>
-            <span>Longitude: {selectedCoordinates.lng}</span>
-          </div>
-        ) : (
-          <p className="muted">Click anywhere on the map to capture coordinates.</p>
-        )}
-      </section>
+        <MapControls
+          onLocate={() => mapActions?.centerOnBaku()}
+          onZoomIn={() => mapActions?.zoomIn()}
+          onZoomOut={() => mapActions?.zoomOut()}
+          onToggleSidebar={() => setIsSidebarOpen((current) => !current)}
+        />
+
+        <PinCard
+          pin={selectedPin}
+          onDirectionsClick={handleDirectionsClick}
+          onShareClick={handleShareClick}
+        />
+      </div>
     </section>
   );
 }

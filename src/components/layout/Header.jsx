@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../app/providers/AuthProvider';
+import { useAuth } from '../../app/providers/useAuth';
 
 const navItems = [
   { to: '/', label: 'Map' },
