@@ -1,9 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
 import { AuthForm } from '../components/AuthForm';
 
 function getAuthErrorMessage(error) {
+  if (import.meta.env.DEV && error?.message) {
+    return `${error.code || 'firebase/error'}: ${error.message}`;
+  }
+
   switch (error?.code) {
     case 'auth/email-already-in-use':
       return 'This email is already in use.';
@@ -26,12 +30,20 @@ export function AuthPage() {
   const [mode, setMode] = useState('login');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const submitInFlightRef = useRef(false);
 
   const redirectTo = useMemo(() => location.state?.from || '/add-pin', [location.state]);
 
   async function handleSubmit(values) {
+    if (submitInFlightRef.current) {
+      return;
+    }
+
     setSubmitError('');
     setIsSubmitting(true);
+    submitInFlightRef.current = true;
+
+    console.info('[CityLayer Auth] submitting mode:', mode);
 
     try {
       if (mode === 'signup') {
@@ -42,6 +54,7 @@ export function AuthPage() {
     } catch (error) {
       setSubmitError(getAuthErrorMessage(error));
     } finally {
+      submitInFlightRef.current = false;
       setIsSubmitting(false);
     }
   }
@@ -79,6 +92,7 @@ export function AuthPage() {
         </div>
 
         <AuthForm
+          key={mode}
           mode={mode}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}

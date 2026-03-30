@@ -1,13 +1,21 @@
-import { NavLink } from 'react-router-dom';
-
 const navItems = [
   { id: 'discover', label: 'Discover', icon: 'explore' },
-  { id: 'events', label: 'Events', icon: 'event_note' },
+  { id: 'events', label: 'Events', icon: 'map' },
   { id: 'saved', label: 'Saved', icon: 'bookmark' },
-  { id: 'collections', label: 'Collections', icon: 'layers' },
+  { id: 'collections', label: 'Collections', icon: 'stack' },
 ];
 
-export function Sidebar({ isOpen, onClose, isAuthenticated, activeSection, onSectionChange, sectionMeta }) {
+export function Sidebar({
+  isOpen,
+  onClose,
+  onCloseAfterSelect,
+  onHoverOpen,
+  onHoverClose,
+  activeSection,
+  onSectionChange,
+  sectionMeta,
+  onCreatePinClick,
+}) {
   return (
     <>
       <div
@@ -15,7 +23,12 @@ export function Sidebar({ isOpen, onClose, isAuthenticated, activeSection, onSec
         onClick={onClose}
         aria-hidden="true"
       />
-      <aside className={`map-sidebar ${isOpen ? 'is-open' : ''}`.trim()} aria-label="Primary navigation">
+      <aside
+        className={`map-sidebar ${isOpen ? 'is-open' : ''}`.trim()}
+        aria-label="Primary navigation"
+        onMouseEnter={onHoverOpen}
+        onMouseLeave={onHoverClose}
+      >
         <div className="map-sidebar-nav">
           {navItems.map((item) => (
             <button
@@ -24,28 +37,24 @@ export function Sidebar({ isOpen, onClose, isAuthenticated, activeSection, onSec
               className={`map-sidebar-link ${activeSection === item.id ? 'is-active' : ''}`.trim()}
               onClick={() => {
                 onSectionChange(item.id);
-                onClose();
+                onCloseAfterSelect?.();
               }}
             >
-              <span className="material-symbols-outlined" aria-hidden="true">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="map-sidebar-icon material-symbols-outlined" aria-hidden="true">{item.icon}</span>
+              <span className="map-sidebar-label">{item.label}</span>
               <span className="map-sidebar-meta">{sectionMeta?.[item.id] ?? ''}</span>
             </button>
           ))}
-
-          <NavLink className="map-sidebar-cta" to={isAuthenticated ? '/add-pin' : '/auth'} onClick={onClose}>
-            {isAuthenticated ? 'Post Event' : 'Sign In To Post'}
-          </NavLink>
         </div>
 
         <div className="map-sidebar-footer">
           <button type="button" className="map-sidebar-link">
-            <span className="material-symbols-outlined" aria-hidden="true">settings</span>
-            <span>Settings</span>
+            <span className="map-sidebar-icon material-symbols-outlined" aria-hidden="true">settings</span>
+            <span className="map-sidebar-label">Settings</span>
           </button>
-          <button type="button" className="map-sidebar-link">
-            <span className="material-symbols-outlined" aria-hidden="true">help_outline</span>
-            <span>Help</span>
+          <button type="button" className="map-sidebar-link map-sidebar-create-mobile" onClick={onCreatePinClick}>
+            <span className="map-sidebar-icon material-symbols-outlined" aria-hidden="true">add_location_alt</span>
+            <span className="map-sidebar-label">Create Pin</span>
           </button>
         </div>
       </aside>

@@ -37,10 +37,6 @@ export function validatePinForm(values) {
     errors.eventDate = 'Event date is required for event pins.';
   }
 
-  if (values.type === 'place' && !values.placeType.trim()) {
-    errors.placeType = 'Place type is required for place pins.';
-  }
-
   return errors;
 }
 

@@ -2,32 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
 import { CityMap } from '../components/CityMap';
-import { FilterBar } from '../components/overlay/FilterBar';
 import { Header } from '../components/overlay/Header';
 import { MapControls } from '../components/overlay/MapControls';
 import { PinCard } from '../components/overlay/PinCard';
 import { Sidebar } from '../components/overlay/Sidebar';
+import { AddPinPanel } from '../../pins/components/add-pin/AddPinPanel';
+import { categoryOptions } from '../../pins/constants/pinSchema';
+import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
 import { subscribeToPins } from '../../pins/services/pins.service';
 
 const SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
-
-function buildFilterOptions(pins) {
-  const categoryFilters = Array.from(
-    new Set(pins.map((pin) => pin.category).filter(Boolean))
-  )
-    .slice(0, 6)
-    .map((category) => ({
-      value: category,
-      label: category.toUpperCase(),
-    }));
-
-  return [
-    { value: 'all', label: 'ALL' },
-    { value: 'event', label: 'EVENTS' },
-    { value: 'place', label: 'PLACES' },
-    ...categoryFilters,
-  ];
-}
 
 function matchesSearch(pin, query) {
   if (!query) {
@@ -59,36 +43,34 @@ export function MapPage() {
   const { user, isAuthLoading, isAuthenticated, logout } = useAuth();
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState('discover');
-  const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
   const [pins, setPins] = useState([]);
   const [selectedPinId, setSelectedPinId] = useState(null);
-  const [isPinsLoading, setIsPinsLoading] = useState(true);
   const [pinsError, setPinsError] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isFilterBarVisible, setIsFilterBarVisible] = useState(true);
   const [mapActions, setMapActions] = useState(null);
   const [savedPinIds, setSavedPinIds] = useState(readSavedPinIds);
   const [isPinCardExpanded, setIsPinCardExpanded] = useState(false);
+  const [focusedPinId, setFocusedPinId] = useState(null);
+  const [isAddPinPanelOpen, setIsAddPinPanelOpen] = useState(false);
+  const [createdPinId, setCreatedPinId] = useState(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
       (nextPins) => {
         setPins(nextPins);
-        setIsPinsLoading(false);
       },
       (error) => {
         console.error('Failed to load pins:', error);
         setPinsError('Could not load pins from Firestore.');
-        setIsPinsLoading(false);
       }
     );
 
     return () => unsubscribe();
   }, []);
 
-  const createdPinId = searchParams.get('createdPinId');
+  const routeCreatedPinId = searchParams.get('createdPinId');
 
   useEffect(() => {
     window.localStorage.setItem(SAVED_PINS_STORAGE_KEY, JSON.stringify(savedPinIds));
@@ -108,20 +90,15 @@ export function MapPage() {
     }
   }, [activeSection, pins, savedPinIds]);
 
-  const filterOptions = useMemo(() => buildFilterOptions(basePins), [basePins]);
-
   const visiblePins = useMemo(() => {
-    return basePins.filter((pin) => {
-      const matchesFilter =
-        activeFilter === 'all' || pin.type === activeFilter || pin.category === activeFilter;
+    return basePins.filter((pin) => matchesSearch(pin, searchQuery));
+  }, [basePins, searchQuery]);
 
-      return matchesFilter && matchesSearch(pin, searchQuery);
-    });
-  }, [activeFilter, basePins, searchQuery]);
+  const effectiveCreatedPinId = createdPinId || routeCreatedPinId || null;
 
   const createdPin = useMemo(
-    () => pins.find((pin) => pin.id === createdPinId) || null,
-    [createdPinId, pins]
+    () => pins.find((pin) => pin.id === effectiveCreatedPinId) || null,
+    [effectiveCreatedPinId, pins]
   );
 
   const effectiveSelectedPinId = useMemo(() => {
@@ -150,28 +127,22 @@ export function MapPage() {
     }
   }
 
+  function isDesktopViewport() {
+    return typeof window !== 'undefined' && window.matchMedia('(min-width: 1025px)').matches;
+  }
+
   function handlePinSelect(pin) {
     setSelectedPinId(pin.id);
+    setFocusedPinId(pin.id);
     setIsPinCardExpanded(true);
+    setSelectedCoordinates(null);
+    setIsAddPinPanelOpen(false);
   }
 
   function handleSectionChange(section) {
     setActiveSection(section);
     setSearchQuery('');
-    setIsFilterBarVisible(true);
     setIsPinCardExpanded(false);
-
-    if (section === 'events') {
-      setActiveFilter('event');
-      return;
-    }
-
-    setActiveFilter('all');
-  }
-
-  function handleResetFilters() {
-    setActiveFilter(activeSection === 'events' ? 'event' : 'all');
-    setSearchQuery('');
   }
 
   function handleToggleSaved(pinId) {
@@ -216,6 +187,49 @@ export function MapPage() {
     }
   }
 
+  function handleOpenAddPin() {
+    if (!isAuthenticated) {
+      navigate('/auth', { state: { from: '/' } });
+      return;
+    }
+
+    setIsSidebarOpen(false);
+    setIsPinCardExpanded(false);
+    setIsAddPinPanelOpen(true);
+  }
+
+  function handleCloseAddPinPanel() {
+    setIsAddPinPanelOpen(false);
+  }
+
+  const {
+    values: addPinValues,
+    errors: addPinErrors,
+    isSubmitting: isAddPinSubmitting,
+    submitError: addPinSubmitError,
+    handleFieldChange: handleAddPinFieldChange,
+    handleTypeChange: handleAddPinTypeChange,
+    handleCategoryChange: handleAddPinCategoryChange,
+    handleSubmit: handleAddPinSubmit,
+    resetForm: resetAddPinForm,
+  } = useAddPinForm({
+    initialCoordinates: selectedCoordinates,
+    user,
+    onSuccess: async (nextCreatedPinId) => {
+      setCreatedPinId(nextCreatedPinId);
+      setFocusedPinId(nextCreatedPinId);
+      setSelectedPinId(nextCreatedPinId);
+      setIsAddPinPanelOpen(false);
+      setSelectedCoordinates(null);
+    },
+  });
+
+  useEffect(() => {
+    if (!isAddPinPanelOpen) {
+      resetAddPinForm(selectedCoordinates);
+    }
+  }, [isAddPinPanelOpen, resetAddPinForm, selectedCoordinates]);
+
   const sectionMeta = useMemo(() => ({
     discover: `${pins.length}`,
     events: `${pins.filter((pin) => pin.type === 'event').length}`,
@@ -228,75 +242,126 @@ export function MapPage() {
       <CityMap
         pins={visiblePins}
         selectedPinId={effectiveSelectedPinId}
+        focusedPinId={focusedPinId || createdPin?.id || null}
+        previewCoordinates={selectedCoordinates}
         onMapClick={setSelectedCoordinates}
         onPinSelect={handlePinSelect}
         onMapReady={setMapActions}
       />
 
       <div className="map-overlay-shell">
-        <Header
-          query={searchQuery}
-          onQueryChange={setSearchQuery}
-          isSidebarOpen={isSidebarOpen}
-          onMenuClick={() => setIsSidebarOpen((current) => !current)}
-          onFilterClick={() => setIsFilterBarVisible((current) => !current)}
-          isAuthLoading={isAuthLoading}
-          isAuthenticated={isAuthenticated}
-          user={user}
-          onLoginClick={() => navigate('/auth')}
-          onLogoutClick={handleLogout}
-        />
+        <div className="map-top-stack">
+          <Header
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
+            isSidebarOpen={isSidebarOpen}
+            onMenuClick={() => setIsSidebarOpen((current) => !current)}
+            isAuthLoading={isAuthLoading}
+            isAuthenticated={isAuthenticated}
+            user={user}
+            onLoginClick={() => navigate('/auth')}
+            onLogoutClick={handleLogout}
+          />
+
+          <div className="map-top-content">
+            {!isAddPinPanelOpen ? (
+              <div className="map-feedback-stack">
+                {pinsError ? <div className="map-alert map-alert-error">{pinsError}</div> : null}
+                {createdPin ? (
+                  <div className="map-alert map-alert-success">
+                    New pin added: <strong>{createdPin.title}</strong> is now live on the map.
+                  </div>
+                ) : null}
+                {selectedCoordinates ? (
+                  <section className="map-selection-panel">
+                    <div className="map-selection-copy">
+                      <span className="map-selection-kicker">CityLayer Pin Drop</span>
+                      <h2>Selected map location</h2>
+                      <p>
+                        {selectedCoordinates.lat}, {selectedCoordinates.lng}
+                      </p>
+                    </div>
+                    <div className="map-selection-actions">
+                      <button type="button" className="map-primary-button" onClick={handleOpenAddPin}>
+                        Create Pin
+                      </button>
+                      <button
+                        type="button"
+                        className="map-card-icon-button"
+                        aria-label="Clear selected location"
+                        onClick={() => setSelectedCoordinates(null)}
+                      >
+                        <span className="material-symbols-outlined" aria-hidden="true">close</span>
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
 
         <Sidebar
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
-          isAuthenticated={isAuthenticated}
+          onCloseAfterSelect={() => {
+            if (!isDesktopViewport()) {
+              setIsSidebarOpen(false);
+            }
+          }}
+          onHoverOpen={() => {
+            if (isDesktopViewport()) {
+              setIsSidebarOpen(true);
+            }
+          }}
+          onHoverClose={() => {
+            if (isDesktopViewport()) {
+              setIsSidebarOpen(false);
+            }
+          }}
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
           sectionMeta={sectionMeta}
+          onCreatePinClick={handleOpenAddPin}
         />
 
-        <FilterBar
-          filters={filterOptions}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-          isVisible={isFilterBarVisible}
-          resultCount={visiblePins.length}
-          onReset={handleResetFilters}
+        <AddPinPanel
+          user={user}
+          values={addPinValues}
+          errors={addPinErrors}
+          categories={categoryOptions}
+          isSubmitting={isAddPinSubmitting}
+          submitError={addPinSubmitError}
+          selectedCoordinates={selectedCoordinates}
+          onFieldChange={handleAddPinFieldChange}
+          onTypeChange={handleAddPinTypeChange}
+          onCategoryChange={handleAddPinCategoryChange}
+          onSubmit={handleAddPinSubmit}
+          onCancel={handleCloseAddPinPanel}
+          variant="drawer"
+          isOpen={isAddPinPanelOpen}
+          locationPrompt="Click anywhere on the map to choose where this new pin should live. The form will keep listening while you pick the location."
+          submitDisabled={!selectedCoordinates}
+          cancelLabel="Close Panel"
         />
-
-        {pinsError ? <div className="map-alert map-alert-error">{pinsError}</div> : null}
-        {createdPin ? (
-          <div className="map-alert map-alert-success">
-            New pin added: <strong>{createdPin.title}</strong> is now live on the map.
-          </div>
-        ) : null}
-        {selectedCoordinates ? (
-          <div className="map-alert map-alert-info">
-            Last map click: {selectedCoordinates.lat}, {selectedCoordinates.lng}
-          </div>
-        ) : null}
-        {isPinsLoading ? <div className="map-loading-panel">Loading live pins from Firestore...</div> : null}
-        {!isPinsLoading && !visiblePins.length ? (
-          <div className="map-loading-panel">No pins match the current search and filters yet.</div>
-        ) : null}
 
         <MapControls
-          onLocate={() => mapActions?.centerOnBaku()}
+          onLocate={() => mapActions?.locateUser?.()}
           onZoomIn={() => mapActions?.zoomIn()}
           onZoomOut={() => mapActions?.zoomOut()}
-          onToggleSidebar={() => setIsSidebarOpen((current) => !current)}
         />
 
-        <PinCard
-          pin={selectedPin}
-          isSaved={selectedPin ? savedPinIds.includes(selectedPin.id) : false}
-          isExpanded={isPinCardExpanded}
-          onToggleExpanded={() => setIsPinCardExpanded((current) => !current)}
-          onDirectionsClick={handleDirectionsClick}
-          onShareClick={handleShareClick}
-          onToggleSaved={() => selectedPin && handleToggleSaved(selectedPin.id)}
-        />
+        {!isAddPinPanelOpen ? (
+          <PinCard
+            pin={selectedPin}
+            isSaved={selectedPin ? savedPinIds.includes(selectedPin.id) : false}
+            isExpanded={isPinCardExpanded}
+            onToggleExpanded={() => setIsPinCardExpanded((current) => !current)}
+            onDirectionsClick={handleDirectionsClick}
+            onShareClick={handleShareClick}
+            onToggleSaved={() => selectedPin && handleToggleSaved(selectedPin.id)}
+          />
+        ) : null}
       </div>
     </section>
   );

@@ -32,7 +32,6 @@ export function Header({
   onQueryChange,
   isSidebarOpen,
   onMenuClick,
-  onFilterClick,
   isAuthLoading,
   isAuthenticated,
   user,
@@ -53,7 +52,7 @@ export function Header({
             <span className="material-symbols-outlined" aria-hidden="true">menu</span>
           </button>
 
-          <div className="map-brand">Urban Curator</div>
+          <div className="map-brand">CityLayer</div>
         </div>
 
         <label className="map-search" aria-label="Search pins">
@@ -62,18 +61,11 @@ export function Header({
             type="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Search hidden gems, events, or categories..."
+            placeholder="Search architecture, zones, or pins..."
           />
         </label>
 
         <div className="map-header-actions">
-          <button type="button" className="map-icon-button map-desktop-only" aria-label="Notifications">
-            <span className="material-symbols-outlined" aria-hidden="true">notifications</span>
-          </button>
-          <button type="button" className="map-icon-button" aria-label="Toggle filters" onClick={onFilterClick}>
-            <span className="material-symbols-outlined" aria-hidden="true">tune</span>
-          </button>
-
           <AuthActions
             isAuthLoading={isAuthLoading}
             isAuthenticated={isAuthenticated}

@@ -4,17 +4,17 @@ import { Header } from './Header';
 
 export function AppLayout() {
   const location = useLocation();
-  const isMapRoute = location.pathname === '/';
+  const isFullscreenRoute = location.pathname === '/' || location.pathname === '/add-pin';
 
   useEffect(() => {
-    document.body.classList.toggle('map-route-body', isMapRoute);
+    document.body.classList.toggle('map-route-body', isFullscreenRoute);
 
     return () => document.body.classList.remove('map-route-body');
-  }, [isMapRoute]);
+  }, [isFullscreenRoute]);
 
   return (
-    <div className={isMapRoute ? 'app-shell app-shell-map' : 'app-shell'}>
-      {isMapRoute ? (
+    <div className={isFullscreenRoute ? 'app-shell app-shell-map' : 'app-shell'}>
+      {isFullscreenRoute ? (
         <Outlet />
       ) : (
         <>

@@ -34,6 +34,10 @@ export function AuthForm({ mode, onSubmit, isSubmitting, submitError }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     await onSubmit({
       displayName: formValues.displayName.trim(),
       email: formValues.email.trim(),

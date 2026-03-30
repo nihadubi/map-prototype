@@ -6,66 +6,77 @@ CityLayer is a community-driven city discovery platform that helps people find l
 
 ---
 
-## 🚀 What it does
+## What it does
 
 CityLayer turns the city into a shared, real-time map where users can:
 
-- discover events happening around them  
-- find underrated places others recommend  
-- add their own pins to share with the community  
+- discover events happening around them
+- find underrated places others recommend
+- add their own pins to share with the community
 
 Instead of scattered social posts, everything lives in one map.
 
 ---
 
-## ✨ Current Features
+## Current Features
 
-- Interactive Leaflet map centered on Baku  
-- Real-time pins loaded from Firestore  
-- Add new pins (events or places)  
-- Firebase Authentication (email/password)  
-- Filter pins by type (events / places)  
-- Pin detail popup with information  
-- Responsive layout  
-- Environment-based Firebase config  
+- Interactive Mapbox map centered on Baku
+- Real-time pins loaded from Firestore
+- Add new pins from the map or form flow
+- Firebase Authentication (email/password)
+- Filter pins by type and category
+- Pin detail popup with information
+- Responsive overlay layout
+- Environment-based Firebase and Mapbox config
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 - React (Vite)
 - Firebase (Auth, Firestore)
-- Leaflet (React Leaflet)
+- Mapbox GL JS
 - React Router
 - Tailwind CSS
 
 ---
 
-## 🛠️ Setup
+## Setup
 
 1. Install dependencies:
-npm install
+   `npm install`
 
 2. Create environment file:
-Copy .env.example to .env and fill Firebase config
+   Copy `.env.example` to `.env` and fill Firebase config plus your Mapbox token.
 
 3. Run:
-npm run dev
+   `npm run dev`
 
 ---
 
-## 🔥 Firebase Setup
+## Firebase Setup
 
-- Create project in Firebase Console  
-- Add Web App  
-- Copy config to .env  
-- Enable Auth (Email/Password)  
-- Enable Firestore  
+- Create project in Firebase Console
+- Add Web App
+- Copy config to `.env`
+- Enable Auth (Email/Password)
+- Enable Firestore
 
 ---
 
-## 📁 Project Structure
+## Mapbox Setup
 
+Add this to `.env`:
+
+```env
+VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
+```
+
+---
+
+## Project Structure
+
+```text
 src/
   app/
   components/
@@ -75,29 +86,29 @@ src/
     map/
     pins/
   pages/
+```
 
 ---
 
-## 🧠 Architecture
+## Architecture
 
 - Feature-based structure
 - Firebase separated from UI
 - Map loads first, data loads after
 - UI overlays on map
+- Shared reusable Mapbox component for map surfaces
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-- Map click → auto-fill location  
-- Category filters  
-- Image upload  
-- Profiles  
-- Realtime updates  
-- Mobile app  
+- Image upload
+- Profiles
+- Realtime updates improvements
+- Mobile app
 
 ---
 
-## 📌 Status
+## Status
 
 Actively in development
