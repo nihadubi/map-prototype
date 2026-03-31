@@ -381,11 +381,7 @@ pre {
 }
 
 .map-screen .mapboxgl-canvas {
-  filter: brightness(0.82) saturate(1) contrast(1.03);
-}
-
-.map-screen.map-theme-light .mapboxgl-canvas {
-  filter: brightness(1) saturate(1) contrast(1);
+  filter: none;
 }
 
 .map-token-alert {
@@ -406,10 +402,10 @@ pre {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at center, transparent 34%, rgba(3, 5, 10, 0.28) 100%),
-    radial-gradient(circle at top left, rgba(202, 152, 255, 0.05), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(0, 244, 254, 0.035), transparent 24%),
-    linear-gradient(180deg, rgba(2, 6, 23, 0.01), rgba(2, 6, 23, 0.12));
+    radial-gradient(circle at center, transparent 48%, rgba(3, 5, 10, 0.08) 100%),
+    radial-gradient(circle at top left, rgba(202, 152, 255, 0.025), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(0, 244, 254, 0.02), transparent 20%),
+    linear-gradient(180deg, rgba(2, 6, 23, 0), rgba(2, 6, 23, 0.04));
   pointer-events: none;
   z-index: 1;
 }
@@ -423,11 +419,7 @@ pre {
 }
 
 .map-screen.map-theme-light::after {
-  background:
-    radial-gradient(circle at center, transparent 34%, rgba(219, 231, 243, 0.03) 100%),
-    radial-gradient(circle at top left, rgba(202, 152, 255, 0.035), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(0, 244, 254, 0.02), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.01), rgba(148, 163, 184, 0.03));
+  background: none;
 }
 
 .map-overlay-shell {

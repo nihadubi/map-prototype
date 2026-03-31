@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import {
   AZERBAIJAN_MAX_BOUNDS,
@@ -41,7 +41,6 @@ export function MapboxMap({
   previewMarker = null,
   focusTarget = null,
   mapStyle = MAPBOX_NIGHT_STYLE_URL,
-  mapDepth = '3d',
   showNavigation = false,
 }) {
   const containerRef = useRef(null);
@@ -50,64 +49,32 @@ export function MapboxMap({
   const callbacksRef = useRef({ onMapClick, onMapReady });
   const focusTargetRef = useRef(focusTarget);
   const styleRef = useRef(mapStyle);
-  const depthRef = useRef(mapDepth);
+  const styleLoadTimeoutRef = useRef(null);
 
-  function applyMapDepth(map, nextDepth) {
-    const layerId = 'citylayer-3d-buildings';
+  const clearStyleLoadTimeout = useCallback(() => {
+    if (styleLoadTimeoutRef.current) {
+      window.clearTimeout(styleLoadTimeoutRef.current);
+      styleLoadTimeoutRef.current = null;
+    }
+  }, []);
 
-    try {
-      if (typeof map.setConfigProperty === 'function') {
-        map.setConfigProperty('basemap', 'show3dObjects', nextDepth === '3d');
-      }
-    } catch (error) {
-      console.warn('CityLayer map depth config fallback triggered:', error);
+  const startStyleFallbackTimer = useCallback((map, requestedStyle) => {
+    clearStyleLoadTimeout();
+
+    if (!requestedStyle || requestedStyle === MAPBOX_NIGHT_STYLE_URL) {
+      return;
     }
 
-    try {
-      if (nextDepth !== '3d') {
-        if (map.getLayer(layerId)) {
-          map.removeLayer(layerId);
-        }
+    styleLoadTimeoutRef.current = window.setTimeout(() => {
+      if (!mapRef.current || styleRef.current !== requestedStyle) {
         return;
       }
 
-      if (map.getLayer(layerId) || !map.getSource('composite')) {
-        return;
-      }
-
-      const firstSymbolLayerId = map
-        .getStyle()
-        ?.layers?.find((layer) => layer.type === 'symbol' && layer.layout?.['text-field'])?.id;
-
-      map.addLayer(
-        {
-          id: layerId,
-          source: 'composite',
-          'source-layer': 'building',
-          filter: ['==', ['get', 'extrude'], 'true'],
-          type: 'fill-extrusion',
-          minzoom: 14,
-          paint: {
-            'fill-extrusion-color': [
-              'interpolate',
-              ['linear'],
-              ['zoom'],
-              14,
-              '#9aa5b1',
-              16,
-              '#cbd5e1',
-            ],
-            'fill-extrusion-height': ['get', 'height'],
-            'fill-extrusion-base': ['get', 'min_height'],
-            'fill-extrusion-opacity': 0.82,
-          },
-        },
-        firstSymbolLayerId
-      );
-    } catch (error) {
-      console.warn('CityLayer 3D buildings could not be applied:', error);
-    }
-  }
+      console.warn(`CityLayer map style fallback: "${requestedStyle}" did not finish loading, switching to night mode.`);
+      styleRef.current = MAPBOX_NIGHT_STYLE_URL;
+      map.setStyle(MAPBOX_NIGHT_STYLE_URL);
+    }, 4500);
+  }, [clearStyleLoadTimeout]);
 
   useEffect(() => {
     callbacksRef.current = { onMapClick, onMapReady };
@@ -116,10 +83,6 @@ export function MapboxMap({
   useEffect(() => {
     focusTargetRef.current = focusTarget;
   }, [focusTarget]);
-
-  useEffect(() => {
-    depthRef.current = mapDepth;
-  }, [mapDepth]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) {
@@ -149,7 +112,29 @@ export function MapboxMap({
     }
 
     map.on('style.load', () => {
-      applyMapDepth(map, depthRef.current);
+      clearStyleLoadTimeout();
+    });
+
+    map.on('error', (event) => {
+      const message = String(event?.error?.message ?? '').toLowerCase();
+      const requestedStyle = styleRef.current;
+
+      if (
+        requestedStyle
+        && requestedStyle !== MAPBOX_NIGHT_STYLE_URL
+        && (
+          message.includes('style')
+          || message.includes('sprite')
+          || message.includes('glyph')
+          || message.includes('401')
+          || message.includes('403')
+        )
+      ) {
+        console.warn(`CityLayer map style error for "${requestedStyle}", switching to night mode.`, event.error);
+        clearStyleLoadTimeout();
+        styleRef.current = MAPBOX_NIGHT_STYLE_URL;
+        map.setStyle(MAPBOX_NIGHT_STYLE_URL);
+      }
     });
 
     map.on('click', (event) => {
@@ -190,8 +175,10 @@ export function MapboxMap({
 
     callbacksRef.current.onMapReady?.(actions);
     mapRef.current = map;
+    startStyleFallbackTimer(map, styleRef.current);
 
     return () => {
+      clearStyleLoadTimeout();
       callbacksRef.current.onMapReady?.(null);
       markersRef.current.forEach(({ marker, popup }) => {
         popup?.remove();
@@ -201,7 +188,16 @@ export function MapboxMap({
       map.remove();
       mapRef.current = null;
     };
-  }, [initialCenter, initialZoom, maxBounds, maxZoom, minZoom, showNavigation]);
+  }, [
+    clearStyleLoadTimeout,
+    initialCenter,
+    initialZoom,
+    maxBounds,
+    maxZoom,
+    minZoom,
+    showNavigation,
+    startStyleFallbackTimer,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -210,19 +206,9 @@ export function MapboxMap({
     }
 
     styleRef.current = mapStyle;
+    startStyleFallbackTimer(map, mapStyle);
     map.setStyle(mapStyle);
-  }, [mapStyle]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) {
-      return;
-    }
-
-    if (map.isStyleLoaded()) {
-      applyMapDepth(map, mapDepth);
-    }
-  }, [mapDepth]);
+  }, [mapStyle, startStyleFallbackTimer]);
 
   useEffect(() => {
     const map = mapRef.current;

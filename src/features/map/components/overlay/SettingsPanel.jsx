@@ -16,13 +16,6 @@ const experienceItems = [
   },
 ];
 
-const themeItems = [
-  { value: 'dawn', label: 'Dawn' },
-  { value: 'day', label: 'Day' },
-  { value: 'dusk', label: 'Dusk' },
-  { value: 'night', label: 'Night' },
-];
-
 function SettingsToggle({ title, description, checked, onChange }) {
   return (
     <label className="map-settings-item">
@@ -43,26 +36,10 @@ function SettingsToggle({ title, description, checked, onChange }) {
   );
 }
 
-function ThemeOption({ label, value, active, disabled, onSelect }) {
-  return (
-    <button
-      type="button"
-      className={`map-theme-option ${active ? 'is-active' : ''}`.trim()}
-      onClick={() => onSelect(value)}
-      disabled={disabled}
-    >
-      {label}
-    </button>
-  );
-}
-
 export function SettingsPanel({
   isOpen,
   settings,
-  effectiveTheme,
-  bakuThemeLabel,
   onToggle,
-  onThemeSelect,
   onClose,
 }) {
   return (
@@ -90,59 +67,6 @@ export function SettingsPanel({
         </div>
 
         <div className="map-settings-body">
-          <section className="map-settings-section">
-            <div className="map-settings-section-header">
-              <p className="map-settings-section-kicker">Theme</p>
-              <p className="map-settings-section-note">{bakuThemeLabel}</p>
-            </div>
-
-            <div className="map-settings-group">
-              <SettingsToggle
-                title="Follow Baku time automatically"
-                description="Switch between dawn, day, dusk, and night based on local time in Baku."
-                checked={Boolean(settings.followBakuTheme)}
-                onChange={() => onToggle('followBakuTheme')}
-              />
-
-              <div className="map-theme-options map-theme-options-four">
-                {themeItems.map((item) => (
-                  <ThemeOption
-                    key={item.value}
-                    label={item.label}
-                    value={item.value}
-                    active={!settings.followBakuTheme && effectiveTheme === item.value}
-                    disabled={settings.followBakuTheme}
-                    onSelect={onThemeSelect}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="map-settings-section">
-            <div className="map-settings-section-header">
-              <p className="map-settings-section-kicker">Map Depth</p>
-              <p className="map-settings-section-note">Switch between flat and extruded buildings</p>
-            </div>
-
-            <div className="map-theme-options">
-              <ThemeOption
-                label="2D"
-                value="2d"
-                active={settings.mapDepth === '2d'}
-                disabled={false}
-                onSelect={(value) => onToggle('mapDepth', value)}
-              />
-              <ThemeOption
-                label="3D"
-                value="3d"
-                active={settings.mapDepth === '3d'}
-                disabled={false}
-                onSelect={(value) => onToggle('mapDepth', value)}
-              />
-            </div>
-          </section>
-
           <section className="map-settings-section">
             <div className="map-settings-section-header">
               <p className="map-settings-section-kicker">Experience</p>

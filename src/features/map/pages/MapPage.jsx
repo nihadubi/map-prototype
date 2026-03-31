@@ -2,18 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
 import { CityMap } from '../components/CityMap';
-import {
-  MAPBOX_DAWN_STYLE_URL,
-  MAPBOX_DAY_STYLE_URL,
-  MAPBOX_DUSK_STYLE_URL,
-  MAPBOX_NIGHT_STYLE_URL,
-} from '../constants/mapConfig';
+import { MAPBOX_NIGHT_STYLE_URL } from '../constants/mapConfig';
 import { Header } from '../components/overlay/Header';
 import { MapControls } from '../components/overlay/MapControls';
 import { PinCard } from '../components/overlay/PinCard';
 import { SettingsPanel } from '../components/overlay/SettingsPanel';
 import { Sidebar } from '../components/overlay/Sidebar';
-import { getBakuThemeLabel, getBakuThemeMode } from '../utils/themeMode';
 import { AddPinPanel } from '../../pins/components/add-pin/AddPinPanel';
 import { categoryOptions } from '../../pins/constants/pinSchema';
 import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
@@ -22,9 +16,6 @@ import { subscribeToPins } from '../../pins/services/pins.service';
 const SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
 const MAP_SETTINGS_STORAGE_KEY = 'citylayer.mapSettings';
 const defaultMapSettings = {
-  followBakuTheme: true,
-  manualTheme: 'night',
-  mapDepth: '3d',
   openCreateOnMapClick: true,
   sidebarExpandOnHover: true,
   animatePreviewPin: true,
@@ -88,7 +79,6 @@ export function MapPage() {
   const [isAddPinPanelOpen, setIsAddPinPanelOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [createdPinId, setCreatedPinId] = useState(null);
-  const [themeTick, setThemeTick] = useState(() => Date.now());
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
@@ -114,14 +104,6 @@ export function MapPage() {
     window.localStorage.setItem(MAP_SETTINGS_STORAGE_KEY, JSON.stringify(mapSettings));
   }, [mapSettings]);
 
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setThemeTick(Date.now());
-    }, 60000);
-
-    return () => window.clearInterval(intervalId);
-  }, []);
-
   const basePins = useMemo(() => {
     switch (activeSection) {
       case 'events':
@@ -137,17 +119,7 @@ export function MapPage() {
   const visiblePins = useMemo(() => {
     return basePins.filter((pin) => matchesSearch(pin, searchQuery));
   }, [basePins, searchQuery]);
-
-  const autoTheme = useMemo(() => getBakuThemeMode(new Date(themeTick)), [themeTick]);
-  const bakuThemeLabel = useMemo(() => getBakuThemeLabel(new Date(themeTick)), [themeTick]);
-  const effectiveTheme = mapSettings.followBakuTheme ? autoTheme : mapSettings.manualTheme;
-  const mapStyleByTheme = {
-    dawn: MAPBOX_DAWN_STYLE_URL,
-    day: MAPBOX_DAY_STYLE_URL,
-    dusk: MAPBOX_DUSK_STYLE_URL,
-    night: MAPBOX_NIGHT_STYLE_URL,
-  };
-  const mapStyle = mapStyleByTheme[effectiveTheme] || MAPBOX_NIGHT_STYLE_URL;
+  const mapStyle = MAPBOX_NIGHT_STYLE_URL;
 
   const effectiveCreatedPinId = createdPinId || routeCreatedPinId || null;
 
@@ -283,14 +255,6 @@ export function MapPage() {
     }));
   }
 
-  function handleThemeSelect(theme) {
-    setMapSettings((current) => ({
-      ...current,
-      manualTheme: theme,
-      followBakuTheme: false,
-    }));
-  }
-
   const {
     values: addPinValues,
     errors: addPinErrors,
@@ -326,7 +290,7 @@ export function MapPage() {
   }), [pins, savedPinIds]);
 
   return (
-    <section className={`map-screen map-theme-${effectiveTheme}`.trim()}>
+    <section className="map-screen map-theme-night">
       <CityMap
         pins={visiblePins}
         selectedPinId={effectiveSelectedPinId}
@@ -334,7 +298,6 @@ export function MapPage() {
         previewCoordinates={selectedCoordinates}
         animatePreviewPin={mapSettings.animatePreviewPin}
         mapStyle={mapStyle}
-        mapDepth={mapSettings.mapDepth}
         onMapClick={handleMapLocationSelect}
         onPinSelect={handlePinSelect}
         onMapReady={setMapActions}
@@ -401,10 +364,7 @@ export function MapPage() {
         <SettingsPanel
           isOpen={isSettingsOpen}
           settings={mapSettings}
-          effectiveTheme={effectiveTheme}
-          bakuThemeLabel={bakuThemeLabel}
           onToggle={handleToggleMapSetting}
-          onThemeSelect={handleThemeSelect}
           onClose={() => setIsSettingsOpen(false)}
         />
 
