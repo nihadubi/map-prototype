@@ -1,4 +1,4 @@
-# UndrPin - Premium Map-Based City Discovery
+# UndrPin - Map-Based City Discovery
 
 **UndrPin** is a modern, map-first web application for discovering local events and underrated places in Azerbaijan. It combines a polished dark UI, real-time pin data, and a fast create-on-map workflow so users can explore and publish pins without leaving the map experience.
 
