@@ -1,74 +1,71 @@
-# UndrPin
+# UndrPin - Premium Map-Based City Discovery
 
-<p align="center">
-  <strong>Map-first city discovery with a premium dark interface.</strong>
-</p>
+**UndrPin** is a modern, map-first web application for discovering local events and underrated places in Azerbaijan. It combines a polished dark UI, real-time pin data, and a fast create-on-map workflow so users can explore and publish pins without leaving the map experience.
 
-<p align="center">
-  UndrPin helps people discover local events and underrated places, then publish new pins directly on the map with a fast, focused workflow.
-</p>
+## Key Features
 
-## Overview
+* **Map-First Discovery:**
+  * Full-screen interactive Mapbox experience centered on Azerbaijan.
+  * Search, explore, and inspect pins directly from the map surface.
+  * Responsive overlay system for sidebar, settings, and pin details.
+* **Smart Pin Creation:**
+  * Click anywhere on the map to choose a location.
+  * Live coordinate preview before submission.
+  * Separate flows for **Places** and **Events**.
+* **Azerbaijan-Only Pin Validation:**
+  * New pins can only be created inside Azerbaijan.
+  * Validation runs both on map selection and during form submission.
+  * Mainland and Nakhchivan are supported through polygon-based boundary checks.
+* **Modern UI/UX:**
+  * Premium dark theme with glassmorphism-inspired overlays.
+  * Refined map marker styling with neon-accent visual language.
+  * Mobile-aware responsive layout for creation and discovery flows.
+* **Realtime Data Layer:**
+  * Pins are loaded from Firestore in realtime.
+  * Firebase Authentication supports protected pin creation.
+  * Saved pin interactions and filtered views live in one interface.
 
-UndrPin is a map-native discovery app built around one core idea: the map should be the product, not just a supporting view.
-
-It combines live pin data, map-based creation, responsive overlays, and a polished visual language into a single flow for exploring and publishing city locations.
-
-## Stack
+## Tech Stack
 
 ### Backend
+![Firebase](https://img.shields.io/badge/Firebase-BaaS-FFCA28?style=for-the-badge&logo=firebase&logoColor=111111)
+![Firestore](https://img.shields.io/badge/Firestore-Realtime-FF8F00?style=for-the-badge&logo=firebase&logoColor=ffffff)
+![Auth](https://img.shields.io/badge/Firebase_Auth-Secure-1F2937?style=for-the-badge&logo=google&logoColor=ffffff)
 
-![Firebase](https://img.shields.io/badge/FIREBASE-FFCA28?style=for-the-badge&logo=firebase&logoColor=111111)
-![Firestore](https://img.shields.io/badge/FIRESTORE-FF8F00?style=for-the-badge&logo=firebase&logoColor=ffffff)
-![Auth](https://img.shields.io/badge/AUTH-1F2937?style=for-the-badge&logo=google&logoColor=ffffff)
-
-- Libraries: `firebase`
+* **Libraries:** `firebase`
 
 ### Frontend
+![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-Build-6D28D9?style=for-the-badge&logo=vite&logoColor=FDE047)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=111111)
+![Mapbox](https://img.shields.io/badge/Mapbox-GL_JS-111827?style=for-the-badge&logo=mapbox&logoColor=ffffff)
+![CSS3](https://img.shields.io/badge/CSS3-Glassmorphism-0EA5E9?style=for-the-badge&logo=css3&logoColor=ffffff)
 
-![React](https://img.shields.io/badge/REACT-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/VITE-6D28D9?style=for-the-badge&logo=vite&logoColor=FDE047)
-![JavaScript](https://img.shields.io/badge/JAVASCRIPT-1F2937?style=for-the-badge&logo=javascript&logoColor=F7DF1E)
-![Mapbox](https://img.shields.io/badge/MAPBOX-111827?style=for-the-badge&logo=mapbox&logoColor=ffffff)
-![CSS3](https://img.shields.io/badge/CSS3-0F172A?style=for-the-badge&logo=css3&logoColor=38BDF8)
-![Glassmorphism](https://img.shields.io/badge/GLASSMORPHISM-0EA5E9?style=for-the-badge&logoColor=ffffff)
+* **Libraries:** `react`, `react-dom`, `react-router-dom`, `mapbox-gl`
 
-- Libraries: `react`, `react-dom`, `react-router-dom`, `mapbox-gl`
+## Installation & Setup
 
-## Highlights
+### Prerequisites
+* Node.js 18+
+* A Firebase project
+* A Mapbox access token
 
-- Real-time pins loaded from Firestore
-- Event and place publishing flows
-- Premium full-screen map UI
-- Search, save, filter, and inspect flows on the same screen
-- Azerbaijan-only pin placement validation
-- Responsive overlays for sidebar, settings, auth, and pin details
+### 1. Clone the Repository
 
-## Product Flow
+```bash
+git clone https://github.com/yourusername/undrpin.git
+cd undrpin
+```
 
-### Discover
-
-Browse the city through a full-screen map experience and inspect places or events without losing spatial context.
-
-### Create
-
-Click directly on the map, preview the selected location, and publish a new pin through a guided map-first flow.
-
-### Explore
-
-Open a pin card, inspect metadata, save it, share it, or use it as your next destination.
-
-## Getting Started
-
-### 1. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Create `.env`
+### 3. Create the Environment File
 
-Copy `.env.example` to `.env` and add your Firebase plus Mapbox values.
+Copy `.env.example` to `.env` and fill in your values:
 
 ```env
 VITE_MAPBOX_ACCESS_TOKEN=your_mapbox_token_here
@@ -80,16 +77,45 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-### 3. Run locally
+### 4. Run the Development Server
 
 ```bash
 npm run dev
 ```
 
-### 4. Production build
+### 5. Build for Production
 
 ```bash
 npm run build
+```
+
+## How It Works
+
+UndrPin is built around a simple but strict product flow:
+
+1. **Discover:** Users browse the city on a full-screen map and filter pins by context.
+2. **Select:** Clicking the map opens a location-driven create flow with live coordinate preview.
+3. **Validate:** Selected coordinates are checked against Azerbaijan boundaries before submission.
+4. **Publish:** Valid pins are stored in Firestore and become available to the interface in realtime.
+5. **Explore:** Users can reopen pins, inspect metadata, save them, and continue navigating the map.
+
+## Project Structure
+
+```text
+src/
+|-- app/
+|   |-- providers/
+|   `-- router.jsx
+|-- components/
+|   `-- layout/
+|-- config/
+|   `-- firebase.js
+|-- features/
+|   |-- auth/
+|   |-- map/
+|   `-- pins/
+`-- styles/
+    `-- global.css
 ```
 
 ## Scripts
@@ -101,26 +127,14 @@ npm run preview
 npm run lint
 ```
 
-## Architecture
+## Notes
 
-- `src/features/auth`: authentication pages, validation, and route protection
-- `src/features/map`: map rendering, overlays, config, and pin interaction
-- `src/features/pins`: add-pin flow, form logic, validation, and services
-- `src/app`: providers and routing
-- `src/styles`: global interface styling
+This project currently focuses on Azerbaijan-based city discovery. Pin creation is intentionally restricted to Azerbaijan territory to keep the experience aligned with the product scope.
 
-## Map Rules
+## Contribution
 
-New pins can only be placed inside Azerbaijan. The restriction is checked during map selection and again during form validation before submission.
+Pull requests are welcome. For larger product or UI changes, open an issue first so the direction can be discussed before implementation.
 
-## Roadmap
-
-- Pin images and richer media
-- User identity and profile layers
-- Better chunk splitting and performance optimization
-- Moderation and discovery improvements
-
-## Status
-
-Active prototype with a premium UI direction and ongoing product refinement.
+---
+*Developed for the UndrPin experience.*
 
