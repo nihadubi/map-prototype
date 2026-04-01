@@ -1,3 +1,5 @@
+import { isWithinAzerbaijan } from '../../map/utils/azerbaijanBounds';
+
 function isFiniteNumber(value) {
   return Number.isFinite(Number(value));
 }
@@ -31,6 +33,8 @@ export function validatePinForm(values) {
     errors.lng = 'Longitude must be a valid number.';
   } else if (Number(values.lng) < -180 || Number(values.lng) > 180) {
     errors.lng = 'Longitude must be between -180 and 180.';
+  } else if (!isWithinAzerbaijan(values.lat, values.lng)) {
+    errors.lat = 'Pins can only be placed inside Azerbaijan.';
   }
 
   if (values.type === 'event' && !values.eventDate) {

@@ -5,6 +5,7 @@ import { categoryOptions } from '../constants/pinSchema';
 import { AddPinPanel } from '../components/add-pin/AddPinPanel';
 import { MapBackground } from '../components/add-pin/MapBackground';
 import { useAddPinForm } from '../hooks/useAddPinForm';
+import { isWithinAzerbaijan } from '../../map/utils/azerbaijanBounds';
 import '../styles/addPinPage.css';
 
 export function AddPinPage() {
@@ -20,7 +21,8 @@ export function AddPinPage() {
       return null;
     }
 
-    return { lat: Number(lat), lng: Number(lng) };
+    const nextCoordinates = { lat: Number(lat), lng: Number(lng) };
+    return isWithinAzerbaijan(nextCoordinates.lat, nextCoordinates.lng) ? nextCoordinates : null;
   }, [searchParams]);
 
   const {
@@ -80,7 +82,13 @@ export function AddPinPage() {
 
       <MapBackground
         selectedCoordinates={selectedCoordinates}
-        onCoordinateSelect={handleCoordinateSelect}
+        onCoordinateSelect={(coordinates) => {
+          if (!isWithinAzerbaijan(coordinates.lat, coordinates.lng)) {
+            return;
+          }
+
+          handleCoordinateSelect(coordinates);
+        }}
         onMapReady={setMapActions}
       />
 

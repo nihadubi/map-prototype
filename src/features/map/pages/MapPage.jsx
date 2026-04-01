@@ -8,6 +8,7 @@ import { MapControls } from '../components/overlay/MapControls';
 import { PinCard } from '../components/overlay/PinCard';
 import { SettingsPanel } from '../components/overlay/SettingsPanel';
 import { Sidebar } from '../components/overlay/Sidebar';
+import { isWithinAzerbaijan } from '../utils/azerbaijanBounds';
 import { AddPinPanel } from '../../pins/components/add-pin/AddPinPanel';
 import { categoryOptions } from '../../pins/constants/pinSchema';
 import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
@@ -231,6 +232,12 @@ export function MapPage() {
   }
 
   function handleMapLocationSelect(coordinates) {
+    if (!isWithinAzerbaijan(coordinates.lat, coordinates.lng)) {
+      setSelectedCoordinates(null);
+      setIsAddPinPanelOpen(false);
+      return;
+    }
+
     setSelectedCoordinates(coordinates);
     setSelectedPinId(null);
     setFocusedPinId(null);
