@@ -22,7 +22,6 @@
   * Mobile-aware responsive layout for creation and discovery flows.
 * **Realtime Data Layer:**
   * Pins are loaded from Firestore in realtime.
-  * Firebase Authentication supports protected pin creation.
   * Saved pin interactions and filtered views live in one interface.
 
 ## Tech Stack
@@ -30,7 +29,6 @@
 ### Backend
 ![Firebase](https://img.shields.io/badge/Firebase-BaaS-FFCA28?style=for-the-badge&logo=firebase&logoColor=111111)
 ![Firestore](https://img.shields.io/badge/Firestore-Realtime-FF8F00?style=for-the-badge&logo=firebase&logoColor=ffffff)
-![Auth](https://img.shields.io/badge/Firebase_Auth-Secure-1F2937?style=for-the-badge&logo=google&logoColor=ffffff)
 
 * **Libraries:** `firebase`
 
@@ -136,5 +134,4 @@ This project currently focuses on Azerbaijan-based city discovery. Pin creation 
 Pull requests are welcome. For larger product or UI changes, open an issue first so the direction can be discussed before implementation.
 
 ---
-*Developed for the UndrPin experience.*
-
+<p align="right"><i>Developed with ❤️ by nihadubi</i></p>
