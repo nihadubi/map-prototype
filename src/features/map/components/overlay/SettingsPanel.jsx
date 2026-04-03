@@ -53,7 +53,7 @@ export function SettingsPanel({
       <aside className={`map-settings-panel ${isOpen ? 'is-open' : ''}`.trim()} aria-label="Settings">
         <div className="map-settings-header">
           <div>
-            <p className="map-settings-kicker">CityLayer Settings</p>
+            <p className="map-settings-kicker">UndrPin Settings</p>
             <h2>Experience</h2>
           </div>
           <button

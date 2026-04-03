@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { auth } from '../../config/firebase';
-import { loginWithEmail, logoutUser, signUpWithEmail } from '../../features/auth/services/auth.service';
+import {
+  initializeAuthPersistence,
+  login,
+  logout,
+  observeAuthState,
+  signUp,
+} from '../../lib/backend/authClient';
 import { AuthContext } from './AuthContext';
 
 export function AuthProvider({ children }) {
@@ -13,13 +17,13 @@ export function AuthProvider({ children }) {
 
     async function initializeAuth() {
       try {
-        await setPersistence(auth, browserLocalPersistence);
+        await initializeAuthPersistence();
       } catch (error) {
         console.error('Failed to set auth persistence:', error);
       }
 
-      unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        setUser(firebaseUser);
+      unsubscribe = observeAuthState((authUser) => {
+        setUser(authUser);
         setIsAuthLoading(false);
       });
     }
@@ -34,9 +38,9 @@ export function AuthProvider({ children }) {
       user,
       isAuthenticated: Boolean(user),
       isAuthLoading,
-      signUp: signUpWithEmail,
-      login: loginWithEmail,
-      logout: logoutUser,
+      signUp,
+      login,
+      logout,
     }),
     [user, isAuthLoading]
   );

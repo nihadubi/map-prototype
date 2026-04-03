@@ -4,17 +4,23 @@ import { Header } from './Header';
 
 export function AppLayout() {
   const location = useLocation();
-  const isFullscreenRoute = ['/', '/add-pin', '/auth'].includes(location.pathname);
+  const isMapFullscreenRoute = ['/', '/add-pin'].includes(location.pathname);
+  const isAuthFullscreenRoute = location.pathname === '/auth';
+  const shellClassName = isMapFullscreenRoute
+    ? 'app-shell app-shell-map'
+    : isAuthFullscreenRoute
+      ? 'app-shell app-shell-fullscreen'
+      : 'app-shell';
 
   useEffect(() => {
-    document.body.classList.toggle('map-route-body', isFullscreenRoute);
+    document.body.classList.toggle('map-route-body', isMapFullscreenRoute);
 
     return () => document.body.classList.remove('map-route-body');
-  }, [isFullscreenRoute]);
+  }, [isMapFullscreenRoute]);
 
   return (
-    <div className={isFullscreenRoute ? 'app-shell app-shell-map' : 'app-shell'}>
-      {isFullscreenRoute ? (
+    <div className={shellClassName}>
+      {isMapFullscreenRoute || isAuthFullscreenRoute ? (
         <Outlet />
       ) : (
         <>

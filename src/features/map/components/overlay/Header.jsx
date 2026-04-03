@@ -52,7 +52,7 @@ export function Header({
             <span className="material-symbols-outlined" aria-hidden="true">menu</span>
           </button>
 
-          <div className="map-brand">CityLayer</div>
+          <div className="map-brand">UndrPin</div>
         </div>
 
         <label className="map-search" aria-label="Search pins">

@@ -4,7 +4,7 @@ import {
   DEFAULT_MAP_ZOOM,
   MAP_CENTER_BAKU_LNGLAT,
 } from '../../../map/constants/mapConfig';
-import { MapboxMap } from '../../../map/components/MapboxMap';
+import { MapCanvas } from '../../../../lib/map/MapCanvas';
 
 const previewMarkerConfig = {
   className: 'add-pin-preview-marker',
@@ -28,7 +28,7 @@ export function MapBackground({ selectedCoordinates, onCoordinateSelect, onMapRe
   return (
     <>
       <div className="absolute inset-0 z-0 add-pin-map-layer">
-        <MapboxMap
+        <MapCanvas
           className="mapbox-map"
           initialCenter={MAP_CENTER_BAKU_LNGLAT}
           initialZoom={DEFAULT_MAP_ZOOM}

@@ -9,9 +9,6 @@ const MapPage = lazy(() =>
 const AuthPage = lazy(() =>
   import('../features/auth/pages/AuthPage').then((module) => ({ default: module.AuthPage }))
 );
-const AddPinPage = lazy(() =>
-  import('../features/pins/pages/AddPinPage').then((module) => ({ default: module.AddPinPage }))
-);
 const NotFoundPage = lazy(() =>
   import('../pages/NotFoundPage').then((module) => ({ default: module.NotFoundPage }))
 );
@@ -39,7 +36,7 @@ export function AppRouter() {
             path="/add-pin"
             element={
               <ProtectedRoute>
-                <AddPinPage />
+                <Navigate to="/?openCreate=1" replace />
               </ProtectedRoute>
             }
           />

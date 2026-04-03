@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { categoryOptions } from '../constants/pinSchema';
-import { createPin } from '../services/pins.service';
+import { createPin } from '../../../lib/backend/pinsClient';
 import { hasValidationErrors, validatePinForm } from '../utils/pinValidation';
 
 const initialValues = {
@@ -16,7 +16,7 @@ const initialValues = {
 };
 
 function getCreatePinErrorMessage() {
-  return 'Could not create pin. Check your Firebase config and Firestore permissions.';
+  return 'Could not create pin. Check your Supabase configuration and table permissions.';
 }
 
 export function useAddPinForm({ initialCoordinates = null, user, onSuccess }) {

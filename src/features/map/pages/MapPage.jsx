@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
 import { CityMap } from '../components/CityMap';
-import { MAPBOX_NIGHT_STYLE_URL } from '../constants/mapConfig';
+import { MAPLIBRE_DARK_STYLE } from '../constants/mapConfig';
 import { Header } from '../components/overlay/Header';
 import { MapControls } from '../components/overlay/MapControls';
 import { PinCard } from '../components/overlay/PinCard';
@@ -12,7 +12,7 @@ import { isWithinAzerbaijan } from '../utils/azerbaijanBounds';
 import { AddPinPanel } from '../../pins/components/add-pin/AddPinPanel';
 import { categoryOptions } from '../../pins/constants/pinSchema';
 import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
-import { subscribeToPins } from '../../pins/services/pins.service';
+import { subscribeToPins } from '../../../lib/backend/pinsClient';
 
 const SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
 const MAP_SETTINGS_STORAGE_KEY = 'citylayer.mapSettings';
@@ -88,7 +88,7 @@ export function MapPage() {
       },
       (error) => {
         console.error('Failed to load pins:', error);
-        setPinsError('Could not load pins from Firestore.');
+        setPinsError('Could not load pins right now. Check your database setup and try again.');
       }
     );
 
@@ -96,6 +96,43 @@ export function MapPage() {
   }, []);
 
   const routeCreatedPinId = searchParams.get('createdPinId');
+  const routeOpenCreate = searchParams.get('openCreate') === '1';
+  const routeLat = searchParams.get('lat');
+  const routeLng = searchParams.get('lng');
+
+  useEffect(() => {
+    if (!routeOpenCreate) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      if (!isAuthLoading) {
+        navigate('/auth', { state: { from: `/?${searchParams.toString()}` } });
+      }
+      return;
+    }
+
+    setIsSidebarOpen(false);
+    setIsSettingsOpen(false);
+    setIsPinCardExpanded(false);
+
+    if (routeLat && routeLng) {
+      const nextCoordinates = {
+        lat: Number(routeLat),
+        lng: Number(routeLng),
+      };
+
+      if (
+        Number.isFinite(nextCoordinates.lat)
+        && Number.isFinite(nextCoordinates.lng)
+        && isWithinAzerbaijan(nextCoordinates.lat, nextCoordinates.lng)
+      ) {
+        setSelectedCoordinates(nextCoordinates);
+      }
+    }
+
+    setIsAddPinPanelOpen(true);
+  }, [isAuthenticated, isAuthLoading, navigate, routeLat, routeLng, routeOpenCreate, searchParams]);
 
   useEffect(() => {
     window.localStorage.setItem(SAVED_PINS_STORAGE_KEY, JSON.stringify(savedPinIds));
@@ -120,7 +157,7 @@ export function MapPage() {
   const visiblePins = useMemo(() => {
     return basePins.filter((pin) => matchesSearch(pin, searchQuery));
   }, [basePins, searchQuery]);
-  const mapStyle = MAPBOX_NIGHT_STYLE_URL;
+  const mapStyle = MAPLIBRE_DARK_STYLE;
 
   const effectiveCreatedPinId = createdPinId || routeCreatedPinId || null;
 

@@ -100,7 +100,7 @@ export function AuthForm({ mode, onSubmit, isSubmitting, submitError }) {
           name="email"
           type="email"
           label="Email Address"
-          placeholder="curator@citylayer.com"
+          placeholder="curator@undrpin.com"
           value={formValues.email}
           onChange={handleChange}
           disabled={isSubmitting}

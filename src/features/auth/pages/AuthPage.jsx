@@ -5,21 +5,33 @@ import { AuthForm } from '../components/AuthForm';
 
 function getAuthErrorMessage(error) {
   if (import.meta.env.DEV && error?.message) {
-    return `${error.code || 'firebase/error'}: ${error.message}`;
+    return `${error.code || error.status || 'auth/error'}: ${error.message}`;
   }
 
   switch (error?.code) {
     case 'auth/email-already-in-use':
+    case 'user_already_exists':
       return 'This email is already in use.';
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
     case 'auth/user-not-found':
+    case 'invalid_credentials':
       return 'Incorrect email or password.';
     case 'auth/invalid-email':
+    case 'email_address_invalid':
       return 'Please enter a valid email address.';
     case 'auth/weak-password':
+    case 'weak_password':
       return 'Password should be at least 6 characters.';
+    case 'auth/email-not-confirmed':
+    case 'email_not_confirmed':
+      return 'Check your email and confirm your account before logging in.';
+    case 'over_email_send_rate_limit':
+      return 'Too many attempts. Please wait a bit and try again.';
     default:
+      if (String(error?.message || '').toLowerCase().includes('supabase auth is not configured')) {
+        return 'Authentication is not configured yet. Add the Supabase project keys to continue.';
+      }
       return 'Authentication failed. Please try again.';
   }
 }
@@ -43,7 +55,7 @@ export function AuthPage() {
     setIsSubmitting(true);
     submitInFlightRef.current = true;
 
-    console.info('[CityLayer Auth] submitting mode:', mode);
+    console.info('[UndrPin Auth] submitting mode:', mode);
 
     try {
       if (mode === 'signup') {
@@ -75,7 +87,7 @@ export function AuthPage() {
               <div className="mb-10 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-xl">
                 <span className="material-symbols-outlined text-[1.9rem] text-[#ca98ff]" aria-hidden="true">layers</span>
                 <div>
-                  <h1 className="font-headline text-3xl font-extrabold tracking-[-0.04em] text-slate-50">CityLayer</h1>
+                  <h1 className="font-headline text-3xl font-extrabold tracking-[-0.04em] text-slate-50">UndrPin</h1>
                   <p className="text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-slate-500">The Digital Curator</p>
                 </div>
               </div>
@@ -117,7 +129,7 @@ export function AuthPage() {
             <div className="mb-8 text-center lg:hidden">
               <div className="inline-flex items-center gap-2">
                 <span className="material-symbols-outlined text-[2rem] text-[#ca98ff]" aria-hidden="true">layers</span>
-                <h1 className="font-headline text-3xl font-extrabold tracking-[-0.04em] text-slate-50">CityLayer</h1>
+                <h1 className="font-headline text-3xl font-extrabold tracking-[-0.04em] text-slate-50">UndrPin</h1>
               </div>
               <p className="mt-2 text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-slate-500">The Digital Curator</p>
             </div>

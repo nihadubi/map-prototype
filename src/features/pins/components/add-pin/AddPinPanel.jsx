@@ -62,7 +62,7 @@ export function AddPinPanel({
             </div>
           </div>
           <p className="max-w-[26rem] text-sm leading-6 text-slate-400">
-            Click anywhere on the map, review the coordinates, and publish a new {values.type} to CityLayer.
+            Click anywhere on the map, review the coordinates, and publish a new {values.type} to UndrPin.
           </p>
           <p className="mt-3 text-xs font-medium text-slate-500">Signed in as {user?.displayName || user?.email}</p>
         </div>

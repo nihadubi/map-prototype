@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
+import maplibregl from 'maplibre-gl';
 import {
   AZERBAIJAN_MAX_BOUNDS,
+  DEFAULT_MAP_BEARING,
+  DEFAULT_MAP_PITCH,
   DEFAULT_MAP_ZOOM,
   MAP_CENTER_BAKU_LNGLAT,
-  MAPBOX_NIGHT_STYLE_URL,
-} from '../constants/mapConfig';
-
-const ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+  MAPLIBRE_DARK_STYLE,
+} from '../../features/map/constants/mapConfig';
 
 function createMarkerElement(className, label) {
   const wrapper = document.createElement('div');
@@ -28,7 +28,7 @@ function normalizeMapClick(event) {
   };
 }
 
-export function MapboxMap({
+export function MapCanvas({
   className = 'mapbox-map',
   initialCenter = MAP_CENTER_BAKU_LNGLAT,
   initialZoom = DEFAULT_MAP_ZOOM,
@@ -40,7 +40,7 @@ export function MapboxMap({
   markers = [],
   previewMarker = null,
   focusTarget = null,
-  mapStyle = MAPBOX_NIGHT_STYLE_URL,
+  mapStyle = MAPLIBRE_DARK_STYLE,
   showNavigation = false,
 }) {
   const containerRef = useRef(null);
@@ -61,7 +61,7 @@ export function MapboxMap({
   const startStyleFallbackTimer = useCallback((map, requestedStyle) => {
     clearStyleLoadTimeout();
 
-    if (!requestedStyle || requestedStyle === MAPBOX_NIGHT_STYLE_URL) {
+    if (!requestedStyle || requestedStyle === MAPLIBRE_DARK_STYLE) {
       return;
     }
 
@@ -70,9 +70,9 @@ export function MapboxMap({
         return;
       }
 
-      console.warn(`CityLayer map style fallback: "${requestedStyle}" did not finish loading, switching to night mode.`);
-      styleRef.current = MAPBOX_NIGHT_STYLE_URL;
-      map.setStyle(MAPBOX_NIGHT_STYLE_URL);
+      console.warn('UndrPin map style fallback triggered, switching to the default dark style.');
+      styleRef.current = MAPLIBRE_DARK_STYLE;
+      map.setStyle(MAPLIBRE_DARK_STYLE);
     }, 4500);
   }, [clearStyleLoadTimeout]);
 
@@ -89,18 +89,13 @@ export function MapboxMap({
       return undefined;
     }
 
-    if (!ACCESS_TOKEN) {
-      console.error('CityLayer Mapbox token missing: set VITE_MAPBOX_ACCESS_TOKEN in your environment.');
-      return undefined;
-    }
-
-    mapboxgl.accessToken = ACCESS_TOKEN;
-
-    const map = new mapboxgl.Map({
+    const map = new maplibregl.Map({
       container: containerRef.current,
       style: styleRef.current,
       center: initialCenter,
       zoom: initialZoom,
+      pitch: DEFAULT_MAP_PITCH,
+      bearing: DEFAULT_MAP_BEARING,
       minZoom,
       maxZoom,
       maxBounds,
@@ -108,7 +103,7 @@ export function MapboxMap({
     });
 
     if (showNavigation) {
-      map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     }
 
     map.on('style.load', () => {
@@ -121,7 +116,7 @@ export function MapboxMap({
 
       if (
         requestedStyle
-        && requestedStyle !== MAPBOX_NIGHT_STYLE_URL
+        && requestedStyle !== MAPLIBRE_DARK_STYLE
         && (
           message.includes('style')
           || message.includes('sprite')
@@ -130,10 +125,10 @@ export function MapboxMap({
           || message.includes('403')
         )
       ) {
-        console.warn(`CityLayer map style error for "${requestedStyle}", switching to night mode.`, event.error);
+        console.warn(`UndrPin map style error for "${requestedStyle}", switching to night mode.`, event.error);
         clearStyleLoadTimeout();
-        styleRef.current = MAPBOX_NIGHT_STYLE_URL;
-        map.setStyle(MAPBOX_NIGHT_STYLE_URL);
+        styleRef.current = MAPLIBRE_DARK_STYLE;
+        map.setStyle(MAPLIBRE_DARK_STYLE);
       }
     });
 
@@ -159,7 +154,7 @@ export function MapboxMap({
             });
           },
           (error) => {
-            console.error('CityLayer geolocation failed:', error);
+            console.error('UndrPin geolocation failed:', error);
           },
           {
             enableHighAccuracy: true,
@@ -224,7 +219,7 @@ export function MapboxMap({
 
     if (previewMarker) {
       const { wrapper } = createMarkerElement(previewMarker.className, previewMarker.label);
-      const marker = new mapboxgl.Marker({ element: wrapper })
+      const marker = new maplibregl.Marker({ element: wrapper })
         .setLngLat([previewMarker.lng, previewMarker.lat])
         .addTo(map);
 
@@ -235,14 +230,14 @@ export function MapboxMap({
       const markerClass = `${pin.className}${pin.isSelected ? ' is-selected' : ''}`;
       const { wrapper } = createMarkerElement(markerClass, pin.label);
       const popup = pin.popupNode
-        ? new mapboxgl.Popup({ offset: 16, closeButton: true }).setDOMContent(pin.popupNode)
+        ? new maplibregl.Popup({ offset: 16, closeButton: true }).setDOMContent(pin.popupNode)
         : null;
 
       if (popup) {
         popup.on('open', () => pin.onSelect?.());
       }
 
-      const marker = new mapboxgl.Marker({ element: wrapper })
+      const marker = new maplibregl.Marker({ element: wrapper })
         .setLngLat([pin.lng, pin.lat]);
 
       if (popup) {
@@ -276,13 +271,6 @@ export function MapboxMap({
   }, [focusTarget?.id, focusTarget?.lat, focusTarget?.lng]);
 
   return (
-    <>
-      <div ref={containerRef} className={className} />
-      {!ACCESS_TOKEN ? (
-        <div className="map-token-alert">
-          Missing Mapbox token. Add <code>VITE_MAPBOX_ACCESS_TOKEN</code> to <code>.env</code>.
-        </div>
-      ) : null}
-    </>
+    <div ref={containerRef} className={className} />
   );
 }

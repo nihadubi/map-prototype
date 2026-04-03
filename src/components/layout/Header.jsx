@@ -3,7 +3,7 @@ import { useAuth } from '../../app/providers/useAuth';
 
 const navItems = [
   { to: '/', label: 'Map' },
-  { to: '/add-pin', label: 'Add Pin' },
+  { to: '/?openCreate=1', label: 'Add Pin' },
 ];
 
 export function Header() {
@@ -21,7 +21,7 @@ export function Header() {
     <header className="header">
       <div className="container header-inner">
         <NavLink to="/" className="brand-link">
-          CityLayer
+          UndrPin
         </NavLink>
 
         <nav className="nav">

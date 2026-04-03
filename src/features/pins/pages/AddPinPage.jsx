@@ -51,7 +51,7 @@ export function AddPinPage() {
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-slate-950 text-sm font-black text-white">CL</div>
             <div>
-              <p className="font-headline text-lg font-extrabold tracking-tight text-slate-950">CityLayer</p>
+              <p className="font-headline text-lg font-extrabold tracking-tight text-slate-950">UndrPin</p>
               <p className="hidden text-xs text-slate-500 sm:block">Map-first pin creation</p>
             </div>
           </div>

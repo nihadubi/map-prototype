@@ -4,7 +4,7 @@ import {
   DEFAULT_MAP_ZOOM,
   MAP_CENTER_BAKU_LNGLAT,
 } from '../constants/mapConfig';
-import { MapboxMap } from './MapboxMap';
+import { MapCanvas } from '../../../lib/map/MapCanvas';
 import { buildMapPopupNode } from '../utils/mapboxPopup';
 
 const markerStyles = {
@@ -76,7 +76,7 @@ export function CityMap({
 
   return (
     <div className="map-canvas">
-      <MapboxMap
+      <MapCanvas
         className="mapbox-map"
         initialCenter={MAP_CENTER_BAKU_LNGLAT}
         initialZoom={DEFAULT_MAP_ZOOM}
