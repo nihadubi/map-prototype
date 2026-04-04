@@ -54,7 +54,7 @@ export function useMapPinDiscovery({
       return createdPin.id;
     }
 
-    return visiblePins[0]?.id || null;
+    return null;
   }, [createdPin, selectedPinId, visiblePins]);
 
   const selectedPin = useMemo(() => {

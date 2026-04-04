@@ -87,6 +87,7 @@ export function MapCanvas({
   const focusTargetRef = useRef(focusTarget);
   const styleRef = useRef(mapStyle);
   const styleLoadTimeoutRef = useRef(null);
+  const dismissedPopupPinIdRef = useRef(null);
 
   const clearStyleLoadTimeout = useCallback(() => {
     if (styleLoadTimeoutRef.current) {
@@ -266,7 +267,7 @@ export function MapCanvas({
 
     if (previewMarker) {
       const { wrapper } = createMarkerElement(previewMarker.className, previewMarker.label);
-      const marker = new maplibregl.Marker({ element: wrapper })
+      const marker = new maplibregl.Marker({ element: wrapper, anchor: 'bottom' })
         .setLngLat([previewMarker.lng, previewMarker.lat])
         .addTo(map);
 
@@ -281,20 +282,29 @@ export function MapCanvas({
         : null;
 
       if (popup) {
-        popup.on('open', () => pin.onSelect?.());
+        popup.on('open', () => {
+          dismissedPopupPinIdRef.current = null;
+          pin.onSelect?.();
+        });
+        popup.on('close', () => {
+          dismissedPopupPinIdRef.current = pin.id;
+        });
       }
 
-      const marker = new maplibregl.Marker({ element: wrapper })
+      const marker = new maplibregl.Marker({ element: wrapper, anchor: 'bottom' })
         .setLngLat([pin.lng, pin.lat]);
 
       if (popup) {
         marker.setPopup(popup);
       }
 
-      wrapper.addEventListener('click', () => pin.onSelect?.());
+      wrapper.addEventListener('click', () => {
+        dismissedPopupPinIdRef.current = null;
+        pin.onSelect?.();
+      });
       marker.addTo(map);
 
-      if (pin.isSelected && popup) {
+      if (pin.isSelected && popup && dismissedPopupPinIdRef.current !== pin.id) {
         marker.togglePopup();
       }
 

@@ -6,7 +6,7 @@ function formatCoordinate(value, directionPositive, directionNegative) {
   }
 
   const direction = numeric >= 0 ? directionPositive : directionNegative;
-  return `${Math.abs(numeric).toFixed(4)} deg ${direction}`;
+  return `${Math.abs(numeric).toFixed(4)}° ${direction}`;
 }
 
 function formatPreciseCoordinate(value) {
@@ -31,7 +31,7 @@ export function LocationPreview({ coordinates, error }) {
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-indigo-300">Current Placement</p>
           <span className="rounded-full border border-white/10 bg-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-            {isReady ? 'Map Linked' : 'Waiting For Map'}
+            {isReady ? 'Map Linked' : 'Waiting for Map'}
           </span>
         </div>
         <p className="mt-1 text-sm font-medium text-white">

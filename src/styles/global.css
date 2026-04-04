@@ -427,7 +427,6 @@ pre {
 .map-overlay-shell {
   position: absolute;
   inset: 0;
-  z-index: 1000;
   pointer-events: none;
 }
 
@@ -497,10 +496,12 @@ pre {
   min-height: 4.25rem;
   padding: 0 1.35rem;
   border-radius: 999px;
-  background: rgba(7, 11, 18, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 11, 18, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: var(--map-text);
-  box-shadow: 0 24px 64px rgba(2, 6, 23, 0.46);
+  box-shadow:
+    0 24px 64px rgba(2, 6, 23, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(26px) saturate(160%);
 }
 
@@ -518,10 +519,12 @@ pre {
   background: transparent;
   color: var(--map-text);
   outline: none;
+  min-width: 0;
+  font-size: 0.98rem;
 }
 
 .map-search input::placeholder {
-  color: var(--map-text-muted);
+  color: #a7b4c8;
 }
 
 .map-header-actions,
@@ -561,6 +564,12 @@ pre {
   background: var(--map-panel-soft);
   border: 1px solid rgba(148, 163, 184, 0.14);
   box-shadow: 0 14px 30px rgba(2, 6, 23, 0.3);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  touch-action: manipulation;
 }
 
 .map-icon-button {
@@ -619,9 +628,25 @@ pre {
   border: none;
   background: transparent;
   padding: 0;
-  color: var(--map-text-muted);
+  color: #c7d2e3;
   font-size: 0.84rem;
   text-align: left;
+}
+
+.map-icon-button:focus-visible,
+.map-card-icon-button:focus-visible,
+.map-floating-button:focus-visible,
+.map-zoom-button:focus-visible,
+.map-floating-pill:focus-visible,
+.map-sidebar-link:focus-visible,
+.map-primary-button:focus-visible,
+.map-settings-toggle:focus-visible,
+.map-text-action:focus-visible {
+  outline: none;
+  border-color: rgba(202, 152, 255, 0.55);
+  box-shadow:
+    0 0 0 4px rgba(202, 152, 255, 0.14),
+    0 18px 40px rgba(2, 6, 23, 0.32);
 }
 
 .map-sidebar-backdrop {
@@ -649,11 +674,11 @@ pre {
   flex-direction: column;
   justify-content: space-between;
   padding: 1.3rem 0.9rem;
-  background: rgba(10, 14, 21, 0.62);
+  background: rgba(10, 14, 21, 0.74);
   backdrop-filter: blur(28px) saturate(180%);
   border-radius: 2rem;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 15;
   overflow: hidden;
   will-change: width, transform;
@@ -683,7 +708,7 @@ pre {
   text-decoration: none;
   border: none;
   background: transparent;
-  color: var(--map-text-muted);
+  color: #c2cedf;
   font-family: Manrope, sans-serif;
   font-size: 0.92rem;
   font-weight: 700;
@@ -733,9 +758,11 @@ pre {
 }
 
 .map-sidebar-link.is-active {
-  color: #d6a1ff;
-  background: rgba(202, 152, 255, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(202, 152, 255, 0.12);
+  color: #f4e7ff;
+  background: linear-gradient(135deg, rgba(202, 152, 255, 0.2), rgba(112, 90, 255, 0.14));
+  box-shadow:
+    inset 0 0 0 1px rgba(202, 152, 255, 0.2),
+    0 14px 28px rgba(2, 6, 23, 0.2);
 }
 
 .map-sidebar-create-cta {
@@ -773,7 +800,7 @@ pre {
 
 .map-sidebar.is-open .map-sidebar-meta {
   margin-left: auto;
-  color: var(--map-text-muted);
+  color: #93a6bf;
   font-size: 0.8rem;
 }
 
@@ -1046,11 +1073,14 @@ pre {
 .map-alert,
 .map-loading-panel {
   width: 100%;
-  padding: 0.85rem 1rem;
+  padding: 0.95rem 1.05rem;
   border-radius: 1rem;
   backdrop-filter: blur(20px);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  box-shadow:
+    0 18px 38px rgba(15, 23, 42, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .map-alert {
@@ -1273,18 +1303,20 @@ pre {
 
 .map-pin-card-wrapper {
   position: absolute;
-  left: 12rem;
-  bottom: 2rem;
+  right: 1.5rem;
+  bottom: 7.25rem;
   z-index: 20;
-  width: min(29rem, calc(100vw - 4rem));
+  width: min(29rem, calc(100vw - 9rem));
 }
 
 .map-pin-card {
   overflow: hidden;
   border-radius: 2rem;
-  background: rgba(8, 12, 19, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.48);
+  background: rgba(8, 12, 19, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 28px 64px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(28px) saturate(180%);
 }
 
@@ -1359,7 +1391,7 @@ pre {
 .map-pin-card-cover-content p {
   max-width: 28ch;
   font-size: 0.92rem;
-  color: rgba(203, 213, 225, 0.74);
+  color: rgba(226, 232, 240, 0.82);
 }
 
 .map-pin-card-body {
@@ -1412,8 +1444,12 @@ pre {
 .map-pin-distance,
 .map-pin-meta,
 .map-pin-description {
-  color: #cbd5e1;
+  color: #d7e0eb;
   font-size: 0.9rem;
+}
+
+.map-pin-description {
+  line-height: 1.65;
 }
 
 .map-pin-tag-row {
@@ -1461,8 +1497,8 @@ pre {
 .map-pin-detail-item {
   padding: 0.8rem 0.85rem;
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .map-pin-detail-item dt {
@@ -1483,7 +1519,7 @@ pre {
 
 .map-pin-location-row {
   gap: 0.45rem;
-  color: var(--map-text-muted);
+  color: #aab8ca;
   font-size: 0.84rem;
   flex-wrap: wrap;
 }
@@ -1502,6 +1538,11 @@ pre {
   font-family: Manrope, sans-serif;
   font-weight: 900;
   box-shadow: 0 18px 40px rgba(202, 152, 255, 0.28);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  touch-action: manipulation;
 }
 
 .map-card-icon-button {
@@ -1517,6 +1558,13 @@ pre {
 }
 
 .map-marker-wrapper {
+  width: 32px;
+  height: 40px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: visible;
   background: transparent;
   border: none;
   filter: drop-shadow(0 14px 22px rgba(2, 6, 23, 0.42));
@@ -1550,6 +1598,7 @@ pre {
     0 14px 26px rgba(2, 6, 23, 0.38),
     0 0 0 1px rgba(255, 255, 255, 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  z-index: 1;
 }
 
 .map-marker::before,
@@ -1637,6 +1686,7 @@ pre {
 .map-marker-preview {
   width: 30px;
   height: 30px;
+  position: relative;
   background:
     linear-gradient(180deg, rgba(9, 12, 20, 0.98), rgba(2, 4, 10, 1)) padding-box,
     linear-gradient(135deg, rgba(202, 152, 255, 0.95), rgba(139, 92, 246, 0.92) 42%, rgba(0, 244, 254, 0.96) 78%, rgba(255, 81, 250, 0.9)) border-box;
@@ -1666,6 +1716,10 @@ pre {
   color: var(--map-text);
   border: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: 0 18px 38px rgba(2, 6, 23, 0.34);
+}
+
+.maplibregl-popup {
+  z-index: 18;
 }
 
 .maplibregl-popup-content {
@@ -1799,7 +1853,10 @@ pre {
   }
 
   .map-pin-card-wrapper {
-    left: 1rem;
+    left: auto;
+    right: 1rem;
+    bottom: 6.75rem;
+    width: min(27rem, calc(100vw - 7rem));
   }
 
   .map-floating-actions {
@@ -1870,11 +1927,14 @@ pre {
 
   .map-header-inner {
     flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .map-search {
     order: 3;
     min-width: 100%;
+    min-height: 3.7rem;
+    padding-inline: 1rem;
   }
 
   .map-header-actions {

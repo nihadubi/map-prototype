@@ -35,6 +35,7 @@ export function Sidebar({
               key={item.id}
               type="button"
               className={`map-sidebar-link ${activeSection === item.id ? 'is-active' : ''}`.trim()}
+              aria-pressed={activeSection === item.id}
               onClick={() => {
                 onSectionChange(item.id);
                 onCloseAfterSelect?.();

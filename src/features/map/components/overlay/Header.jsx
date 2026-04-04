@@ -1,6 +1,6 @@
 function AuthActions({ isAuthLoading, isAuthenticated, user, onLoginClick, onLogoutClick }) {
   if (isAuthLoading) {
-    return <span className="map-user-label">Checking session...</span>;
+    return <span className="map-user-label">Checking session…</span>;
   }
 
   if (isAuthenticated) {
@@ -59,9 +59,12 @@ export function Header({
           <span className="material-symbols-outlined" aria-hidden="true">search</span>
           <input
             type="search"
+            name="search"
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Search places, events, or categories..."
+            placeholder="Search places, events, or categories…"
+            autoComplete="off"
+            enterKeyHint="search"
           />
         </label>
 

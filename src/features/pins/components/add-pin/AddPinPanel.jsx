@@ -91,11 +91,12 @@ export function AddPinPanel({
                 id="title"
                 name="title"
                 className={fieldBaseClass}
-                placeholder="What's this spot called?"
+                placeholder="What's this spot called?…"
                 type="text"
                 value={values.title}
                 onChange={onFieldChange}
                 disabled={isSubmitting}
+                autoComplete="off"
               />
               {errors.title ? <p className="field-error mt-2">{errors.title}</p> : null}
             </div>
@@ -108,11 +109,12 @@ export function AddPinPanel({
                 id="description"
                 name="description"
                 className={`${fieldBaseClass} resize-none`}
-                placeholder={values.type === 'event' ? 'What should people know before they join?' : 'Tell the community what makes this place worth saving.'}
+                placeholder={values.type === 'event' ? 'What should people know before they join?…' : 'Tell the community what makes this place worth saving…'}
                 rows="4"
                 value={values.description}
                 onChange={onFieldChange}
                 disabled={isSubmitting}
+                autoComplete="off"
               />
               {errors.description ? <p className="field-error mt-2">{errors.description}</p> : null}
             </div>
@@ -142,6 +144,7 @@ export function AddPinPanel({
                     value={values.eventDate}
                     onChange={onFieldChange}
                     disabled={isSubmitting}
+                    autoComplete="off"
                   />
                   {errors.eventDate ? <p className="field-error mt-2">{errors.eventDate}</p> : null}
                 </div>
@@ -157,6 +160,7 @@ export function AddPinPanel({
                     value={values.startTime}
                     onChange={onFieldChange}
                     disabled={isSubmitting}
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -177,7 +181,7 @@ export function AddPinPanel({
             className="flex w-full items-center justify-center gap-2 rounded-[1.15rem] bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 py-4 text-sm font-bold text-white shadow-[0_20px_45px_rgba(99,102,241,0.35)] transition hover:shadow-[0_24px_55px_rgba(99,102,241,0.42)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isSubmitting || submitDisabled}
           >
-            <span>{isSubmitting ? 'Creating Pin...' : 'Create Pin'}</span>
+            <span>{isSubmitting ? 'Creating Pin…' : 'Create Pin'}</span>
             <span className="material-symbols-outlined text-lg" aria-hidden="true">arrow_forward</span>
           </button>
           <button type="button" className="mt-3 w-full py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-slate-300" onClick={onCancel} disabled={isSubmitting}>

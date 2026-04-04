@@ -46,7 +46,7 @@ export function AuthPage() {
   const [submitError, setSubmitError] = useState('');
   const submitInFlightRef = useRef(false);
 
-  const redirectTo = useMemo(() => location.state?.from || '/', [location.state]);
+  const redirectTo = useMemo(() => location.state?.from || '/app', [location.state]);
 
   async function handleSubmit(values) {
     if (submitInFlightRef.current) {

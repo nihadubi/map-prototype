@@ -4,7 +4,7 @@ import { Header } from './Header';
 
 export function AppLayout() {
   const location = useLocation();
-  const isMapFullscreenRoute = ['/', '/add-pin'].includes(location.pathname);
+  const isMapFullscreenRoute = ['/app', '/add-pin'].includes(location.pathname);
   const shellClassName = isMapFullscreenRoute ? 'app-shell app-shell-map' : 'app-shell';
 
   useEffect(() => {

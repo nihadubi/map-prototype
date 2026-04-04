@@ -26,7 +26,7 @@ export function useMapCreateFlow({
 
     if (!isAuthenticated) {
       if (!isAuthLoading) {
-        navigate('/auth', { state: { from: `/?${searchParams.toString()}` } });
+        navigate('/auth', { state: { from: `/app?${searchParams.toString()}` } });
       }
       return;
     }
@@ -62,7 +62,7 @@ export function useMapCreateFlow({
 
   function openAddPinPanel() {
     if (!isAuthenticated) {
-      navigate('/auth', { state: { from: '/' } });
+      navigate('/auth', { state: { from: '/app' } });
       return;
     }
 
@@ -92,7 +92,7 @@ export function useMapCreateFlow({
       return;
     }
 
-    navigate('/auth', { state: { from: '/' } });
+    navigate('/auth', { state: { from: '/app' } });
   }
 
   function handleCreateSuccess(nextCreatedPinId) {

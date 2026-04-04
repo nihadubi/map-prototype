@@ -2,8 +2,8 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../app/providers/useAuth';
 
 const navItems = [
-  { to: '/', label: 'Map' },
-  { to: '/?openCreate=1', label: 'Add Pin' },
+  { to: '/app', label: 'Map' },
+  { to: '/app?openCreate=1', label: 'Add Pin' },
 ];
 
 export function Header() {
@@ -20,7 +20,7 @@ export function Header() {
   return (
     <header className="header">
       <div className="container header-inner">
-        <NavLink to="/" className="brand-link">
+        <NavLink to="/app" className="brand-link">
           UndrPin
         </NavLink>
 

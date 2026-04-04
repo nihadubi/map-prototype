@@ -2,9 +2,27 @@ function formatCoordinate(value) {
   return Number(value || 0).toFixed(3);
 }
 
+function formatEventDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(parsedDate);
+}
+
 function getPinSummary(pin) {
   if (pin.type === 'event') {
-    return pin.eventDate ? `Event on ${pin.eventDate}` : 'Community event';
+    const eventDateLabel = formatEventDate(pin.eventDate);
+    return eventDateLabel ? `Event on ${eventDateLabel}` : 'Community event';
   }
 
   return pin.category ? `${pin.category} place` : 'Community place';
@@ -26,13 +44,14 @@ export function PinCard({
   const categoryLabel = pin.category || (pin.type === 'event' ? 'Live Event' : 'City Favorite');
   const typeLabel = pin.type === 'event' ? 'Event' : 'Place';
   const cityLabel = pin.city ? pin.city.toUpperCase() : 'BAKU';
+  const eventDateLabel = formatEventDate(pin.eventDate);
   const coordinateLabel = `${formatCoordinate(pin.lat || pin.coordinates?.[0])}, ${formatCoordinate(pin.lng || pin.coordinates?.[1])}`;
   const detailItems = [
     { label: 'Category', value: pin.category || 'General' },
     { label: 'Created By', value: pin.createdBy || 'Community member' },
     ...(pin.type === 'event'
       ? [
-          { label: 'Event Date', value: pin.eventDate || 'TBD' },
+          { label: 'Event Date', value: eventDateLabel || 'TBD' },
           { label: 'Start Time', value: pin.startTime || 'Not set' },
         ]
       : [{ label: 'Pin Type', value: 'Place' }]),
@@ -80,10 +99,10 @@ export function PinCard({
 
           <div className="map-pin-tag-row">
             <span className="map-pin-tag map-pin-tag-secondary">{cityLabel}</span>
-            {pin.type === 'event' && pin.eventDate ? <span className="map-pin-tag map-pin-tag-primary">{pin.eventDate}</span> : null}
+            {pin.type === 'event' && eventDateLabel ? <span className="map-pin-tag map-pin-tag-primary">{eventDateLabel}</span> : null}
           </div>
 
-          <p className="map-pin-description">{pin.description}</p>
+          <p className="map-pin-description">{pin.description || 'No description added yet.'}</p>
 
           <div className="map-pin-card-expandable">
             <dl className="map-pin-details-grid">

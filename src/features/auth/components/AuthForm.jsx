@@ -85,7 +85,7 @@ export function AuthForm({ mode, onSubmit, isSubmitting, submitError }) {
             id="displayName"
             name="displayName"
             label="Display Name"
-            placeholder="Your name"
+            placeholder="Your name…"
             value={formValues.displayName}
             onChange={handleChange}
             disabled={isSubmitting}
@@ -114,7 +114,7 @@ export function AuthForm({ mode, onSubmit, isSubmitting, submitError }) {
           name="password"
           type={isPasswordVisible ? 'text' : 'password'}
           label="Password"
-          placeholder="Enter your password"
+          placeholder="Enter your password…"
           value={formValues.password}
           onChange={handleChange}
           disabled={isSubmitting}
@@ -149,7 +149,7 @@ export function AuthForm({ mode, onSubmit, isSubmitting, submitError }) {
           {isSubmitting ? (
             <>
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[#46007d]/30 border-t-[#46007d]" />
-              <span>Please wait...</span>
+              <span>Please wait…</span>
             </>
           ) : (
             <span>{isSignup ? 'Create account' : 'Log in'}</span>
