@@ -29,9 +29,9 @@ export function AppRouter() {
   return (
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
+        <Route path="/auth" element={<AuthPage />} />
         <Route element={<AppLayout />}>
           <Route path="/" element={<MapPage />} />
-          <Route path="/auth" element={<AuthPage />} />
           <Route
             path="/add-pin"
             element={

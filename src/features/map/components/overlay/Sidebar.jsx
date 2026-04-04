@@ -52,7 +52,7 @@ export function Sidebar({
             <span className="map-sidebar-icon material-symbols-outlined" aria-hidden="true">settings</span>
             <span className="map-sidebar-label">Settings</span>
           </button>
-          <button type="button" className="map-sidebar-link map-sidebar-create-mobile" onClick={onCreatePinClick}>
+          <button type="button" className="map-sidebar-link map-sidebar-create-mobile map-sidebar-create-cta" onClick={onCreatePinClick}>
             <span className="map-sidebar-icon material-symbols-outlined" aria-hidden="true">add_location_alt</span>
             <span className="map-sidebar-label">Create Pin</span>
           </button>

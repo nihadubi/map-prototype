@@ -17,6 +17,10 @@ dist-ssr
 .env.*
 !.env.example
 
+# Temporary design / map-style work files
+.tmp/
+.tmp_styles/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
