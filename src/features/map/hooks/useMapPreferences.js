@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 
-const SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
-const MAP_SETTINGS_STORAGE_KEY = 'citylayer.mapSettings';
+const SAVED_PINS_STORAGE_KEY = 'undrpin.savedPins';
+const LEGACY_SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
+const MAP_SETTINGS_STORAGE_KEY = 'undrpin.mapSettings';
+const LEGACY_MAP_SETTINGS_STORAGE_KEY = 'citylayer.mapSettings';
 
 const defaultMapSettings = {
   openCreateOnMapClick: true,
@@ -15,7 +17,8 @@ function readSavedPinIds() {
   }
 
   try {
-    const raw = window.localStorage.getItem(SAVED_PINS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(SAVED_PINS_STORAGE_KEY)
+      || window.localStorage.getItem(LEGACY_SAVED_PINS_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (error) {
     console.error('Failed to read saved pins:', error);
@@ -29,7 +32,8 @@ function readMapSettings() {
   }
 
   try {
-    const raw = window.localStorage.getItem(MAP_SETTINGS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(MAP_SETTINGS_STORAGE_KEY)
+      || window.localStorage.getItem(LEGACY_MAP_SETTINGS_STORAGE_KEY);
     return raw ? { ...defaultMapSettings, ...JSON.parse(raw) } : defaultMapSettings;
   } catch (error) {
     console.error('Failed to read map settings:', error);
@@ -43,10 +47,12 @@ export function useMapPreferences() {
 
   useEffect(() => {
     window.localStorage.setItem(SAVED_PINS_STORAGE_KEY, JSON.stringify(savedPinIds));
+    window.localStorage.removeItem(LEGACY_SAVED_PINS_STORAGE_KEY);
   }, [savedPinIds]);
 
   useEffect(() => {
     window.localStorage.setItem(MAP_SETTINGS_STORAGE_KEY, JSON.stringify(mapSettings));
+    window.localStorage.removeItem(LEGACY_MAP_SETTINGS_STORAGE_KEY);
   }, [mapSettings]);
 
   function toggleSavedPin(pinId) {

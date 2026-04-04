@@ -22,7 +22,7 @@ export function AddPinPanel({
   submitDisabled = false,
   cancelLabel = 'Cancel & Return',
 }) {
-  const formId = 'citylayer-add-pin-form';
+  const formId = 'undrpin-add-pin-form';
   const locationReady = Boolean(selectedCoordinates);
   const fieldBaseClass =
     'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/60 focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/10';

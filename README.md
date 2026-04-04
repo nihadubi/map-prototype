@@ -4,7 +4,7 @@
 
 # UndrPin
 
-**A map-first city discovery app for finding real events and underrated places in Azerbaijan.**
+**A premium map-first city discovery prototype for events and underrated places in Baku and Azerbaijan.**
 
 [![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -18,47 +18,36 @@
 
 ---
 
-## About
+## Preview
 
-UndrPin is a modern, map-first web app built to make city discovery feel more useful, local, and real.
+Replace the image below with your latest product screenshot before publishing the repo.
 
-Instead of relying on scattered posts or private recommendations, people can explore a live map, discover events and hidden places, and publish their own finds directly from the map itself.
-
-The current prototype is focused on **Azerbaijan**, with **Baku** as the main starting point.
+![UndrPin Preview](images/preview.png)
 
 ---
 
-## Why UndrPin?
+## About
 
-Great places and events are often hard to find for the wrong reasons:
+UndrPin is a fullscreen map-first web app for discovering places and events through a dark, premium map experience.
 
-- you hear about events too late
-- the best spots stay hidden unless you know someone
-- online discovery feels noisy and repetitive
-
-UndrPin is an attempt to build a cleaner alternative:
-
-- **real places**
-- **real events**
-- **real community-driven discovery**
+The current prototype is focused on **Azerbaijan**, with **Baku** as the main starting point. Users can browse pins, inspect details directly on the map, and create new pins from an in-map slide-in panel.
 
 ---
 
 ## Current Features
 
-- Full-screen interactive map experience
-- Event and place pins
-- Map-first pin creation flow
-- Click-on-map coordinate selection
-- Premium dark UI with glass-style overlays
-- Custom marker system for different pin types
-- Authentication with protected actions
+- Fullscreen MapLibre map experience
+- Premium dark glass UI
+- Distinct event and place pins
+- In-map create-pin flow
+- Custom marker system
+- Supabase auth and pins backend
+- Realtime-ready pin updates
 - Azerbaijan-only pin validation
-- Realtime pin updates through Supabase
 
 ---
 
-## Built With
+## Stack
 
 ### Frontend
 - React
@@ -73,129 +62,125 @@ UndrPin is an attempt to build a cleaner alternative:
 
 ---
 
-## Product Flow
-
-1. Open the map
-2. Explore existing event and place pins
-3. Click on the map to choose a location
-4. Open the create-pin panel
-5. Submit a new place or event
-6. See the new pin appear on the map
-
----
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - npm
-- A Supabase project
+- a Supabase project
+- a `profiles` table and `pins` table configured in Supabase
 
 ### Installation
-
-1. Clone the repository
 
 ```bash
 git clone https://github.com/nihadubi/map-prototype.git
 cd map-prototype
-```
-
-2. Install dependencies
-
-```bash
 npm install
 ```
 
-3. Create an environment file
+Copy `.env.example` to `.env` and add your Supabase values:
 
-Copy `.env.example` to `.env` and fill in your Supabase values.
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
+```
 
-4. Start the development server
+Run locally:
 
 ```bash
 npm run dev
 ```
 
-5. Build for production
+Build for production:
 
 ```bash
 npm run build
+```
+
+Preview the production build locally:
+
+```bash
+npm run preview
 ```
 
 ---
 
 ## Environment Variables
 
-Example:
-
 ```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
-VITE_AUTH_PROVIDER=supabase
-VITE_PINS_READ_PROVIDER=supabase
-VITE_PINS_WRITE_PROVIDER=supabase
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
 ```
 
 ---
 
-## Project Structure
+## Product Flow
 
-```text
-src/
-  app/
-    providers/
-    router.jsx
-  components/
-    layout/
-  features/
-    auth/
-    map/
-    pins/
-  lib/
-    backend/
-    map/
-    supabase/
-  styles/
-```
+1. Open the main map
+2. Browse visible event and place pins
+3. Search or filter the current map view
+4. Click on the map to choose a location
+5. Open the create-pin panel
+6. Publish a new place or event pin
+7. See the new pin appear on the map
 
 ---
 
-## Scope
+## Routes
 
-This prototype is intentionally focused on an Azerbaijan-first discovery experience.
+- `/` main map experience
+- `/auth` standalone fullscreen auth route
+- `/add-pin` lightweight fallback redirect to the in-map create flow
 
-At the moment, pin creation is restricted to Azerbaijan so the product stays aligned with its local-first purpose.
+---
+
+## Deploy Notes
+
+Before deploying:
+
+- set `VITE_SUPABASE_URL`
+- set `VITE_SUPABASE_ANON_KEY`
+- make sure `profiles` and `pins` tables exist
+- make sure Supabase RLS policies are configured for auth, profiles, and pins
+- verify signup, login, pin read, and pin creation in a production-like environment
+
+UndrPin is a static frontend app, so any standard Vite-compatible host works well for deployment.
+
+---
+
+## Status
+
+UndrPin is currently in the **prototype / polish** phase.
+
+The architecture is already on:
+
+- Supabase for auth and data
+- MapLibre for map rendering
+- in-map pin creation instead of route-based creation
+
+Current focus:
+
+- deploy-readiness
+- product polish
+- tighter data and RLS safety
+- public presentation quality
 
 ---
 
 ## Roadmap
 
 - Saved pins
-- Better search and filtering
-- Richer pin detail cards
-- Profile layer
-- Improved onboarding
-- More polished discovery flows
-
----
-
-## Status
-
-UndrPin is currently in the **prototype / polish phase**.
-
-The core system is working. The current focus is on:
-
-- UX refinement
-- map interaction polish
-- consistency across the product
-- making the prototype more shareable and testable
+- Better filtering and discovery
+- Image uploads for pins
+- Richer profile layer
+- More polished onboarding and sharing
 
 ---
 
 ## Contributing
 
-This is currently a personal prototype, but feedback, ideas, and product suggestions are always welcome.
+This is currently a personal prototype, but product feedback, ideas, and suggestions are welcome.
 
 ---
 
