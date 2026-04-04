@@ -19,6 +19,29 @@ function getCreatePinErrorMessage() {
   return 'Could not create pin. Check your Supabase configuration and table permissions.';
 }
 
+function getCreatePinErrorMessageFromError(error) {
+  const message = String(error?.message || '').toLowerCase();
+
+  if (message.includes('signed in')) {
+    return 'Please sign in again before creating a pin.';
+  }
+
+  if (message.includes('profile is not ready')) {
+    return 'Your account setup is incomplete. Check your database policies and try again.';
+  }
+
+  if (
+    message.includes('row-level security')
+    || message.includes('permission')
+    || message.includes('not allowed')
+    || message.includes('violates row-level security')
+  ) {
+    return 'Could not create pin. Check your Supabase permissions and try again.';
+  }
+
+  return getCreatePinErrorMessage();
+}
+
 export function useAddPinForm({ initialCoordinates = null, user, onSuccess }) {
   const [values, setValues] = useState(() => ({
     ...initialValues,
@@ -167,7 +190,7 @@ export function useAddPinForm({ initialCoordinates = null, user, onSuccess }) {
       return createdPinId;
     } catch (error) {
       console.error('Create pin failed:', error);
-      setSubmitError(getCreatePinErrorMessage());
+      setSubmitError(getCreatePinErrorMessageFromError(error));
       return null;
     } finally {
       setIsSubmitting(false);

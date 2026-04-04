@@ -1063,6 +1063,24 @@ pre {
   color: #fda4af;
 }
 
+.map-alert-notice {
+  color: #dbeafe;
+  background: rgba(8, 12, 19, 0.74);
+  border-color: rgba(125, 211, 252, 0.18);
+  box-shadow:
+    0 16px 36px rgba(2, 6, 23, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.map-alert-empty {
+  color: #d8e2f0;
+  background: rgba(8, 12, 19, 0.76);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow:
+    0 16px 36px rgba(2, 6, 23, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 .map-loading-panel {
   color: var(--map-text-muted);
   background: var(--map-panel);

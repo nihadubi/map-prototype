@@ -9,6 +9,15 @@ import {
   MAPLIBRE_DARK_STYLE,
 } from '../../features/map/constants/mapConfig';
 
+const GEOLOCATION_MESSAGES = {
+  unsupported: 'This browser cannot access your location.',
+  denied: 'Location access is blocked. Allow location permission in your browser settings and try again.',
+  unavailable: 'Your location is unavailable right now. Check your device location services and try again.',
+  insecure: 'Locate me requires a secure HTTPS connection.',
+  timeout: 'Finding your location took too long. Try again in a moment.',
+  unknown: 'We could not determine your location right now. Please try again.',
+};
+
 function createMarkerElement(className, label) {
   const wrapper = document.createElement('div');
   wrapper.className = 'map-marker-wrapper';
@@ -26,6 +35,34 @@ function normalizeMapClick(event) {
     lat: Number(event.lngLat.lat.toFixed(6)),
     lng: Number(event.lngLat.lng.toFixed(6)),
   };
+}
+
+function getGeolocationFailure() {
+  if (typeof window !== 'undefined' && !window.isSecureContext) {
+    return { code: 'insecure', message: GEOLOCATION_MESSAGES.insecure };
+  }
+
+  if (!navigator.geolocation) {
+    return { code: 'unsupported', message: GEOLOCATION_MESSAGES.unsupported };
+  }
+
+  return null;
+}
+
+function mapGeolocationError(error) {
+  switch (error?.code) {
+    case error?.PERMISSION_DENIED:
+    case 1:
+      return { code: 'denied', message: GEOLOCATION_MESSAGES.denied };
+    case error?.POSITION_UNAVAILABLE:
+    case 2:
+      return { code: 'unavailable', message: GEOLOCATION_MESSAGES.unavailable };
+    case error?.TIMEOUT:
+    case 3:
+      return { code: 'timeout', message: GEOLOCATION_MESSAGES.timeout };
+    default:
+      return { code: 'unknown', message: GEOLOCATION_MESSAGES.unknown };
+  }
 }
 
 export function MapCanvas({
@@ -140,8 +177,11 @@ export function MapCanvas({
       zoomIn: () => map.zoomIn(),
       zoomOut: () => map.zoomOut(),
       centerOnBaku: () => map.flyTo({ center: MAP_CENTER_BAKU_LNGLAT, zoom: DEFAULT_MAP_ZOOM, duration: 800 }),
-      locateUser: () => {
-        if (!navigator.geolocation) {
+      locateUser: () => new Promise((resolve, reject) => {
+        const preflightFailure = getGeolocationFailure();
+
+        if (preflightFailure) {
+          reject(preflightFailure);
           return;
         }
 
@@ -152,9 +192,15 @@ export function MapCanvas({
               zoom: Math.max(map.getZoom(), 13),
               duration: 800,
             });
+
+            resolve({
+              lat: coords.latitude,
+              lng: coords.longitude,
+            });
           },
           (error) => {
             console.error('UndrPin geolocation failed:', error);
+            reject(mapGeolocationError(error));
           },
           {
             enableHighAccuracy: true,
@@ -163,6 +209,7 @@ export function MapCanvas({
           }
         );
       },
+      ),
       focusPin: ({ lng, lat }) => {
         map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: 800 });
       },

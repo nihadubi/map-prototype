@@ -80,6 +80,7 @@ export function MapPage() {
   const [isAddPinPanelOpen, setIsAddPinPanelOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [createdPinId, setCreatedPinId] = useState(null);
+  const [locateMessage, setLocateMessage] = useState('');
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
@@ -94,6 +95,18 @@ export function MapPage() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!locateMessage) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setLocateMessage('');
+    }, 4200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [locateMessage]);
 
   const routeCreatedPinId = searchParams.get('createdPinId');
   const routeOpenCreate = searchParams.get('openCreate') === '1';
@@ -158,6 +171,7 @@ export function MapPage() {
     return basePins.filter((pin) => matchesSearch(pin, searchQuery));
   }, [basePins, searchQuery]);
   const mapStyle = MAPLIBRE_DARK_STYLE;
+  const shouldShowNoResults = !pinsError && !isAddPinPanelOpen && pins.length > 0 && visiblePins.length === 0;
 
   const effectiveCreatedPinId = createdPinId || routeCreatedPinId || null;
 
@@ -268,6 +282,15 @@ export function MapPage() {
     setIsAddPinPanelOpen(false);
   }
 
+  async function handleLocateUser() {
+    try {
+      setLocateMessage('');
+      await mapActions?.locateUser?.();
+    } catch (error) {
+      setLocateMessage(error?.message || 'We could not determine your location right now. Please try again.');
+    }
+  }
+
   function handleMapLocationSelect(coordinates) {
     if (!isWithinAzerbaijan(coordinates.lat, coordinates.lng)) {
       setSelectedCoordinates(null);
@@ -362,9 +385,22 @@ export function MapPage() {
           />
 
           <div className="map-top-content">
+            <div className="map-feedback-stack">
+              {locateMessage ? (
+                <div className="map-alert map-alert-notice" role="status" aria-live="polite">
+                  {locateMessage}
+                </div>
+              ) : null}
+            </div>
+
             {!isAddPinPanelOpen ? (
               <div className="map-feedback-stack">
                 {pinsError ? <div className="map-alert map-alert-error">{pinsError}</div> : null}
+                {shouldShowNoResults ? (
+                  <div className="map-alert map-alert-empty" role="status" aria-live="polite">
+                    No pins match this view. Try clearing search or switching filters.
+                  </div>
+                ) : null}
                 {createdPin ? (
                   <div className="map-alert map-alert-success">
                     New pin added: <strong>{createdPin.title}</strong> is now live on the map.
@@ -433,7 +469,7 @@ export function MapPage() {
         />
 
         <MapControls
-          onLocate={() => mapActions?.locateUser?.()}
+          onLocate={handleLocateUser}
           onZoomIn={() => mapActions?.zoomIn()}
           onZoomOut={() => mapActions?.zoomOut()}
         />

@@ -14,9 +14,20 @@ function mapSupabaseUser(user) {
   };
 }
 
-async function bootstrapProfile(user) {
+function isMissingProfilesTableError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  const details = String(error?.details || '').toLowerCase();
+
+  return (
+    message.includes('relation')
+    || message.includes('schema cache')
+    || details.includes('profiles')
+  );
+}
+
+export async function ensureSupabaseProfile(user, { strict = false } = {}) {
   if (!supabase || !user) {
-    return;
+    return false;
   }
 
   const payload = {
@@ -27,19 +38,15 @@ async function bootstrapProfile(user) {
   const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
 
   if (error) {
-    const message = String(error.message || '').toLowerCase();
-    const details = String(error.details || '').toLowerCase();
-
-    if (
-      message.includes('relation')
-      || message.includes('schema cache')
-      || details.includes('profiles')
-    ) {
-      return;
+    if (!strict && isMissingProfilesTableError(error)) {
+      console.warn('UndrPin profile bootstrap skipped because the profiles table is not ready.', error);
+      return false;
     }
 
     throw error;
   }
+
+  return true;
 }
 
 export const supabaseAuthAdapter = {
@@ -84,7 +91,11 @@ export const supabaseAuthAdapter = {
     }
 
     if (data.user) {
-      await bootstrapProfile(data.user);
+      try {
+        await ensureSupabaseProfile(data.user);
+      } catch (profileError) {
+        console.warn('UndrPin profile bootstrap failed after signup.', profileError);
+      }
     }
 
     if (!data.session && data.user) {
@@ -120,7 +131,11 @@ export const supabaseAuthAdapter = {
     }
 
     if (data.user) {
-      await bootstrapProfile(data.user);
+      try {
+        await ensureSupabaseProfile(data.user);
+      } catch (profileError) {
+        console.warn('UndrPin profile bootstrap failed after login.', profileError);
+      }
     }
 
     return mapSupabaseUser(data.user);

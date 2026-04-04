@@ -1,4 +1,5 @@
 import { supabase } from '../../supabase/client';
+import { ensureSupabaseProfile } from '../auth/supabaseAuthAdapter';
 
 const PINS_REFRESH_EVENT = 'undrpin:pins-refresh';
 
@@ -86,6 +87,17 @@ export const supabasePinsAdapter = {
       throw new Error('Supabase client is not configured.');
     }
 
+    if (!user?.id && !user?.uid) {
+      throw new Error('You must be signed in to create a pin.');
+    }
+
+    try {
+      await ensureSupabaseProfile(user.rawUser || user, { strict: true });
+    } catch (profileError) {
+      console.error('UndrPin profile bootstrap blocked pin creation:', profileError);
+      throw new Error('Your profile is not ready for pin creation yet. Check your database policies and try again.');
+    }
+
     const payload = {
       type: values.type,
       title: values.title.trim(),
@@ -94,7 +106,6 @@ export const supabasePinsAdapter = {
       city_slug: 'baku',
       lat: Number(values.lat),
       lng: Number(values.lng),
-      created_by: user?.id || user?.uid || null,
       status: 'active',
       event_date: values.type === 'event' ? values.eventDate : null,
       start_time: values.type === 'event' ? values.startTime || null : null,
