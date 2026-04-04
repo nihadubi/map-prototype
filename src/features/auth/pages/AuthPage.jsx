@@ -26,6 +26,8 @@ function getAuthErrorMessage(error) {
     case 'auth/email-not-confirmed':
     case 'email_not_confirmed':
       return 'Check your email and confirm your account before logging in.';
+    case 'profile/not-ready':
+      return 'Your account setup is incomplete. Check your database setup and try again.';
     case 'over_email_send_rate_limit':
       return 'Too many attempts. Please wait a bit and try again.';
     default:

@@ -1,5 +1,8 @@
 import { isSupabaseConfigured, supabase } from '../../supabase/client';
 
+const PROFILE_SETUP_ERROR_CODE = 'profile/not-ready';
+const profileReadyPromises = new Map();
+
 function mapSupabaseUser(user) {
   if (!user) {
     return null;
@@ -14,6 +17,13 @@ function mapSupabaseUser(user) {
   };
 }
 
+function createProfileSetupError(message, cause) {
+  const error = new Error(message);
+  error.code = PROFILE_SETUP_ERROR_CODE;
+  error.cause = cause;
+  return error;
+}
+
 function isMissingProfilesTableError(error) {
   const message = String(error?.message || '').toLowerCase();
   const details = String(error?.details || '').toLowerCase();
@@ -25,11 +35,7 @@ function isMissingProfilesTableError(error) {
   );
 }
 
-export async function ensureSupabaseProfile(user, { strict = false } = {}) {
-  if (!supabase || !user) {
-    return false;
-  }
-
+async function upsertProfileRow(user) {
   const payload = {
     id: user.id,
     display_name: user.user_metadata?.display_name || '',
@@ -38,15 +44,89 @@ export async function ensureSupabaseProfile(user, { strict = false } = {}) {
   const { error } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' });
 
   if (error) {
-    if (!strict && isMissingProfilesTableError(error)) {
-      console.warn('UndrPin profile bootstrap skipped because the profiles table is not ready.', error);
-      return false;
-    }
+    throw error;
+  }
+}
 
+async function verifyProfileRow(userId) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
     throw error;
   }
 
-  return true;
+  if (!data?.id) {
+    throw createProfileSetupError('Profile row is missing after bootstrap.');
+  }
+
+  return data;
+}
+
+export async function ensureSupabaseProfile(user, { strict = false } = {}) {
+  if (!supabase || !user?.id) {
+    return false;
+  }
+
+  const cacheKey = `${user.id}:${strict ? 'strict' : 'soft'}`;
+
+  if (profileReadyPromises.has(cacheKey)) {
+    return profileReadyPromises.get(cacheKey);
+  }
+
+  const readinessPromise = (async () => {
+    try {
+      await upsertProfileRow(user);
+      await verifyProfileRow(user.id);
+      return true;
+    } catch (error) {
+      if (!strict && isMissingProfilesTableError(error)) {
+        console.warn('UndrPin profile bootstrap skipped because the profiles table is not ready.', error);
+        return false;
+      }
+
+      if (isMissingProfilesTableError(error)) {
+        throw createProfileSetupError(
+          'Profiles table is missing or inaccessible. Run the Supabase profile setup before using authenticated features.',
+          error
+        );
+      }
+
+      if (error?.code === PROFILE_SETUP_ERROR_CODE) {
+        throw error;
+      }
+
+      throw createProfileSetupError(
+        'Your profile could not be prepared for authenticated actions. Check your Supabase policies and try again.',
+        error
+      );
+    } finally {
+      profileReadyPromises.delete(cacheKey);
+    }
+  })();
+
+  profileReadyPromises.set(cacheKey, readinessPromise);
+  return readinessPromise;
+}
+
+async function ensureProfileForAuthenticatedUser(user) {
+  await ensureSupabaseProfile(user, { strict: true });
+  return user;
+}
+
+async function signOutIfPossible() {
+  if (!supabase) {
+    return;
+  }
+
+  try {
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error('UndrPin failed to sign out after profile bootstrap error:', error);
+  }
 }
 
 export const supabaseAuthAdapter = {
@@ -60,15 +140,44 @@ export const supabaseAuthAdapter = {
       return () => {};
     }
 
+    let isActive = true;
+
+    async function publishSessionUser(user) {
+      if (!isActive) {
+        return;
+      }
+
+      if (!user) {
+        callback(null);
+        return;
+      }
+
+      try {
+        await ensureProfileForAuthenticatedUser(user);
+        if (isActive) {
+          callback(mapSupabaseUser(user));
+        }
+      } catch (error) {
+        console.error('UndrPin session user profile bootstrap failed:', error);
+        await signOutIfPossible();
+        if (isActive) {
+          callback(null);
+        }
+      }
+    }
+
     supabase.auth.getSession().then(({ data }) => {
-      callback(mapSupabaseUser(data.session?.user ?? null));
+      void publishSessionUser(data.session?.user ?? null);
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      callback(mapSupabaseUser(session?.user ?? null));
+      void publishSessionUser(session?.user ?? null);
     });
 
-    return () => data.subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      data.subscription.unsubscribe();
+    };
   },
 
   async signUp(values) {
@@ -90,14 +199,6 @@ export const supabaseAuthAdapter = {
       throw error;
     }
 
-    if (data.user) {
-      try {
-        await ensureSupabaseProfile(data.user);
-      } catch (profileError) {
-        console.warn('UndrPin profile bootstrap failed after signup.', profileError);
-      }
-    }
-
     if (!data.session && data.user) {
       const loginResult = await supabase.auth.signInWithPassword({
         email: values.email,
@@ -110,7 +211,12 @@ export const supabaseAuthAdapter = {
         throw confirmationError;
       }
 
+      await ensureProfileForAuthenticatedUser(loginResult.data.user);
       return mapSupabaseUser(loginResult.data.user);
+    }
+
+    if (data.user) {
+      await ensureProfileForAuthenticatedUser(data.user);
     }
 
     return mapSupabaseUser(data.user);
@@ -130,12 +236,13 @@ export const supabaseAuthAdapter = {
       throw error;
     }
 
-    if (data.user) {
-      try {
-        await ensureSupabaseProfile(data.user);
-      } catch (profileError) {
-        console.warn('UndrPin profile bootstrap failed after login.', profileError);
+    try {
+      if (data.user) {
+        await ensureProfileForAuthenticatedUser(data.user);
       }
+    } catch (profileError) {
+      await signOutIfPossible();
+      throw profileError;
     }
 
     return mapSupabaseUser(data.user);
