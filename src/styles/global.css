@@ -1609,15 +1609,7 @@ pre {
 }
 
 .map-marker::before {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  top: 5px;
-  right: 4px;
-  background: var(--marker-color);
-  box-shadow:
-    0 0 12px var(--marker-glow),
-    0 0 22px var(--marker-glow);
+  display: none;
 }
 
 .map-marker::after {
