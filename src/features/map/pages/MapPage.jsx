@@ -69,7 +69,6 @@ export function MapPage() {
     activeSection,
     searchQuery,
     setSearchQuery,
-    selectedPinId,
     setSelectedPinId,
     visiblePins,
     createdPin,

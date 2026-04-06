@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isWithinAzerbaijan } from '../utils/azerbaijanBounds';
 
 export function useMapCreateFlow({
@@ -9,15 +9,39 @@ export function useMapCreateFlow({
   openCreateOnMapClick,
   closeOverlayPanels,
 }) {
-  const [selectedCoordinates, setSelectedCoordinates] = useState(null);
+  const [selectedCoordinatesState, setSelectedCoordinates] = useState(null);
   const [focusedPinId, setFocusedPinId] = useState(null);
   const [createdPinId, setCreatedPinId] = useState(null);
-  const [isAddPinPanelOpen, setIsAddPinPanelOpen] = useState(false);
+  const [isManualAddPinPanelOpen, setIsManualAddPinPanelOpen] = useState(false);
 
   const routeOpenCreate = searchParams.get('openCreate') === '1';
   const routeLat = searchParams.get('lat');
   const routeLng = searchParams.get('lng');
   const routeCreatedPinId = searchParams.get('createdPinId');
+
+  const routeSelectedCoordinates = useMemo(() => {
+    if (!routeLat || !routeLng) {
+      return null;
+    }
+
+    const nextCoordinates = {
+      lat: Number(routeLat),
+      lng: Number(routeLng),
+    };
+
+    if (
+      !Number.isFinite(nextCoordinates.lat)
+      || !Number.isFinite(nextCoordinates.lng)
+      || !isWithinAzerbaijan(nextCoordinates.lat, nextCoordinates.lng)
+    ) {
+      return null;
+    }
+
+    return nextCoordinates;
+  }, [routeLat, routeLng]);
+
+  const selectedCoordinates = selectedCoordinatesState ?? routeSelectedCoordinates;
+  const isAddPinPanelOpen = isManualAddPinPanelOpen || (routeOpenCreate && isAuthenticated);
 
   useEffect(() => {
     if (!routeOpenCreate) {
@@ -32,30 +56,11 @@ export function useMapCreateFlow({
     }
 
     closeOverlayPanels();
-
-    if (routeLat && routeLng) {
-      const nextCoordinates = {
-        lat: Number(routeLat),
-        lng: Number(routeLng),
-      };
-
-      if (
-        Number.isFinite(nextCoordinates.lat)
-        && Number.isFinite(nextCoordinates.lng)
-        && isWithinAzerbaijan(nextCoordinates.lat, nextCoordinates.lng)
-      ) {
-        setSelectedCoordinates(nextCoordinates);
-      }
-    }
-
-    setIsAddPinPanelOpen(true);
   }, [
     closeOverlayPanels,
     isAuthenticated,
     isAuthLoading,
     navigate,
-    routeLat,
-    routeLng,
     routeOpenCreate,
     searchParams,
   ]);
@@ -67,17 +72,17 @@ export function useMapCreateFlow({
     }
 
     closeOverlayPanels();
-    setIsAddPinPanelOpen(true);
+    setIsManualAddPinPanelOpen(true);
   }
 
   function closeAddPinPanel() {
-    setIsAddPinPanelOpen(false);
+    setIsManualAddPinPanelOpen(false);
   }
 
   function handleMapLocationSelect(coordinates) {
     if (!isWithinAzerbaijan(coordinates.lat, coordinates.lng)) {
       setSelectedCoordinates(null);
-      setIsAddPinPanelOpen(false);
+      setIsManualAddPinPanelOpen(false);
       return;
     }
 
@@ -87,7 +92,7 @@ export function useMapCreateFlow({
 
     if (isAuthenticated) {
       if (openCreateOnMapClick) {
-        setIsAddPinPanelOpen(true);
+        setIsManualAddPinPanelOpen(true);
       }
       return;
     }
@@ -98,7 +103,7 @@ export function useMapCreateFlow({
   function handleCreateSuccess(nextCreatedPinId) {
     setCreatedPinId(nextCreatedPinId);
     setFocusedPinId(nextCreatedPinId);
-    setIsAddPinPanelOpen(false);
+    setIsManualAddPinPanelOpen(false);
     setSelectedCoordinates(null);
   }
 
