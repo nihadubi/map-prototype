@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { categoryOptions } from '../constants/pinSchema';
 import { createPin } from '../../../lib/backend/pinsClient';
 import { hasValidationErrors, validatePinForm } from '../utils/pinValidation';
 
@@ -7,7 +6,7 @@ const initialValues = {
   type: 'place',
   title: '',
   description: '',
-  category: categoryOptions[0] ?? '',
+  category: 'community',
   lat: '',
   lng: '',
   eventDate: '',
@@ -21,6 +20,7 @@ function getCreatePinErrorMessage() {
 
 function getCreatePinErrorMessageFromError(error) {
   const message = String(error?.message || '').toLowerCase();
+  const code = String(error?.code || '').toLowerCase();
 
   if (message.includes('signed in')) {
     return 'Please sign in again before creating a pin.';
@@ -36,7 +36,15 @@ function getCreatePinErrorMessageFromError(error) {
     || message.includes('not allowed')
     || message.includes('violates row-level security')
   ) {
-    return 'Could not create pin. Check your Supabase permissions and try again.';
+    return 'Create pin is blocked by Supabase RLS. Apply the latest schema.sql and make sure pins.created_by matches auth.uid().';
+  }
+
+  if (
+    code === 'pgrst205'
+    || message.includes('schema cache')
+    || message.includes("could not find the table 'public.pins'")
+  ) {
+    return 'Pins table is missing in Supabase. Run the latest schema.sql on your project.';
   }
 
   return getCreatePinErrorMessage();

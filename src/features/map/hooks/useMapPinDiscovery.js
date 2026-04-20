@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState, useTransition } from 'react';
 
 function matchesSearch(pin, query) {
   if (!query) {
@@ -14,6 +14,7 @@ function matchesSearch(pin, query) {
 export function useMapPinDiscovery({
   pins,
   savedPinIds,
+  isSavedPinsLoading = false,
   createdPinId,
   routeCreatedPinId,
   isAddPinPanelOpen,
@@ -21,6 +22,8 @@ export function useMapPinDiscovery({
   const [activeSection, setActiveSection] = useState('discover');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPinId, setSelectedPinId] = useState(null);
+  const [isSearchPending, startSearchTransition] = useTransition();
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const basePins = useMemo(() => {
     switch (activeSection) {
@@ -35,8 +38,8 @@ export function useMapPinDiscovery({
   }, [activeSection, pins, savedPinIds]);
 
   const visiblePins = useMemo(() => {
-    return basePins.filter((pin) => matchesSearch(pin, searchQuery));
-  }, [basePins, searchQuery]);
+    return basePins.filter((pin) => matchesSearch(pin, deferredSearchQuery));
+  }, [basePins, deferredSearchQuery]);
 
   const effectiveCreatedPinId = createdPinId || routeCreatedPinId || null;
 
@@ -63,7 +66,10 @@ export function useMapPinDiscovery({
       || null;
   }, [effectiveSelectedPinId, pins, visiblePins]);
 
-  const shouldShowNoResults = !isAddPinPanelOpen && pins.length > 0 && visiblePins.length === 0;
+  const shouldShowNoResults = !isAddPinPanelOpen
+    && pins.length > 0
+    && visiblePins.length === 0
+    && !(activeSection === 'saved' && isSavedPinsLoading);
 
   const sectionMeta = useMemo(() => ({
     discover: `${pins.length}`,
@@ -76,10 +82,17 @@ export function useMapPinDiscovery({
     setSearchQuery('');
   }
 
+  function handleSearchQueryChange(value) {
+    startSearchTransition(() => {
+      setSearchQuery(value);
+    });
+  }
+
   return {
     activeSection,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSearchQueryChange,
+    isSearchPending,
     selectedPinId,
     setSelectedPinId,
     visiblePins,

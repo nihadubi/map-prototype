@@ -29,13 +29,23 @@ create table if not exists public.pins (
   )
 );
 
+create table if not exists public.saved_pins (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  pin_id uuid not null references public.pins (id) on delete cascade,
+  created_at timestamptz not null default timezone('utc', now()),
+  primary key (user_id, pin_id)
+);
+
 create index if not exists pins_created_at_idx on public.pins (created_at desc);
 create index if not exists pins_status_idx on public.pins (status);
 create index if not exists pins_city_slug_idx on public.pins (city_slug);
 create index if not exists pins_lat_lng_idx on public.pins (lat, lng);
+create index if not exists saved_pins_user_id_idx on public.saved_pins (user_id);
+create index if not exists saved_pins_pin_id_idx on public.saved_pins (pin_id);
 
 alter table public.profiles enable row level security;
 alter table public.pins enable row level security;
+alter table public.saved_pins enable row level security;
 
 drop policy if exists "profiles_select_own" on public.profiles;
 create policy "profiles_select_own"
@@ -83,5 +93,26 @@ for update
 to authenticated
 using (auth.uid() = created_by)
 with check (auth.uid() = created_by);
+
+drop policy if exists "saved_pins_select_own" on public.saved_pins;
+create policy "saved_pins_select_own"
+on public.saved_pins
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+drop policy if exists "saved_pins_insert_own" on public.saved_pins;
+create policy "saved_pins_insert_own"
+on public.saved_pins
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+drop policy if exists "saved_pins_delete_own" on public.saved_pins;
+create policy "saved_pins_delete_own"
+on public.saved_pins
+for delete
+to authenticated
+using (auth.uid() = user_id);
 
 alter publication supabase_realtime add table public.pins;

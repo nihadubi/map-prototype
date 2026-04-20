@@ -1,36 +1,115 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Suspense, lazy, useEffect, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
 import { subscribeToPins } from '../../../lib/backend/pinsClient';
-import { AddPinPanel } from '../../pins/components/add-pin/AddPinPanel';
 import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
-import { categoryOptions } from '../../pins/constants/pinSchema';
-import { CityMap } from '../components/CityMap';
 import { Header } from '../components/overlay/Header';
 import { MapControls } from '../components/overlay/MapControls';
-import { PinCard } from '../components/overlay/PinCard';
-import { SettingsPanel } from '../components/overlay/SettingsPanel';
 import { Sidebar } from '../components/overlay/Sidebar';
 import { MAPLIBRE_DARK_STYLE } from '../constants/mapConfig';
 import { useMapCreateFlow } from '../hooks/useMapCreateFlow';
 import { useMapOverlayState } from '../hooks/useMapOverlayState';
 import { useMapPinDiscovery } from '../hooks/useMapPinDiscovery';
 import { useMapPreferences } from '../hooks/useMapPreferences';
+import { useSavedPins } from '../hooks/useSavedPins';
+import { loadCityMapModule } from '../utils/cityMapLoader';
+import {
+  loadAddPinPanelModule,
+  loadPinCardModule,
+  loadSettingsPanelModule,
+} from '../utils/mapOverlayLoaders';
+
+const CityMap = lazy(() =>
+  loadCityMapModule().then((module) => ({ default: module.CityMap }))
+);
+const AddPinPanel = lazy(() =>
+  loadAddPinPanelModule().then((module) => ({ default: module.AddPinPanel }))
+);
+const SettingsPanel = lazy(() =>
+  loadSettingsPanelModule().then((module) => ({ default: module.SettingsPanel }))
+);
+const PinCard = lazy(() =>
+  loadPinCardModule().then((module) => ({ default: module.PinCard }))
+);
+
+function MapCanvasFallback() {
+  return (
+    <div className="map-canvas">
+      <div className="mapbox-map flex items-center justify-center bg-[#09111b] text-slate-400">
+        Loading map...
+      </div>
+    </div>
+  );
+}
+
+function DeferredPanelFallback() {
+  return null;
+}
+
+function isPinsFetchNetworkError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  const details = String(error?.details || '').toLowerCase();
+
+  return (
+    message.includes('failed to fetch')
+    || message.includes('networkerror')
+    || message.includes('load failed')
+    || details.includes('failed to fetch')
+  );
+}
+
+function getPinsErrorMessage(error) {
+  const message = String(error?.message || '').toLowerCase();
+
+  if (message.includes('supabase client is not configured')) {
+    return 'Pins are not configured yet. Add your Supabase keys to load the live map.';
+  }
+
+  if (
+    message.includes('row-level security')
+    || message.includes('permission')
+    || message.includes('not allowed')
+    || message.includes('violates row-level security')
+  ) {
+    return 'Pins are not available right now. Check your Supabase permissions.';
+  }
+
+  if (isPinsFetchNetworkError(error)) {
+    return 'Pins are temporarily unavailable. Check your connection and try again.';
+  }
+
+  return 'Could not load pins right now. Check your database setup and try again.';
+}
 
 export function MapPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthLoading, isAuthenticated, logout } = useAuth();
   const [searchParams] = useSearchParams();
   const [pins, setPins] = useState([]);
+  const [isPinsReady, setIsPinsReady] = useState(false);
   const [pinsError, setPinsError] = useState('');
   const [mapActions, setMapActions] = useState(null);
 
   const {
-    savedPinIds,
     mapSettings,
-    toggleSavedPin,
     toggleMapSetting,
   } = useMapPreferences();
+
+  const {
+    savedPinIds,
+    isSavedPinsLoading,
+    savedPinsError,
+    toggleSavedPin,
+  } = useSavedPins({
+    user,
+    isAuthenticated,
+    isAuthLoading,
+    pins,
+    isPinsReady,
+    navigate,
+    returnToPath: `${location.pathname}${location.search}`,
+  });
 
   const {
     isSidebarOpen,
@@ -56,6 +135,7 @@ export function MapPage() {
     closeAddPinPanel,
     handleMapLocationSelect,
     handleCreateSuccess,
+    clearCreatedPinState,
   } = useMapCreateFlow({
     navigate,
     searchParams,
@@ -80,6 +160,7 @@ export function MapPage() {
   } = useMapPinDiscovery({
     pins,
     savedPinIds,
+    isSavedPinsLoading,
     createdPinId,
     routeCreatedPinId,
     isAddPinPanelOpen,
@@ -89,10 +170,19 @@ export function MapPage() {
     const unsubscribe = subscribeToPins(
       (nextPins) => {
         setPins(nextPins);
+        setIsPinsReady(true);
+        setPinsError('');
       },
       (error) => {
-        console.error('Failed to load pins:', error);
-        setPinsError('Could not load pins right now. Check your database setup and try again.');
+        if (isPinsFetchNetworkError(error)) {
+          console.warn('Pins feed is temporarily unreachable:', error);
+        } else {
+          console.error('Failed to load pins:', error);
+        }
+
+        setPins([]);
+        setIsPinsReady(true);
+        setPinsError(getPinsErrorMessage(error));
       }
     );
 
@@ -106,7 +196,6 @@ export function MapPage() {
     submitError: addPinSubmitError,
     handleFieldChange: handleAddPinFieldChange,
     handleTypeChange: handleAddPinTypeChange,
-    handleCategoryChange: handleAddPinCategoryChange,
     handleSubmit: handleAddPinSubmit,
     resetForm: resetAddPinForm,
   } = useAddPinForm({
@@ -137,6 +226,7 @@ export function MapPage() {
   }
 
   function handlePinSelect(pin) {
+    loadPinCardModule();
     setSelectedPinId(pin.id);
     setFocusedPinId(pin.id);
     setSelectedCoordinates(null);
@@ -145,8 +235,43 @@ export function MapPage() {
   }
 
   function handleMapSectionChange(section) {
+    const nextParams = new URLSearchParams(searchParams);
+    let shouldReplaceSearch = false;
+
+    ['createdPinId', 'lat', 'lng', 'openCreate'].forEach((key) => {
+      if (nextParams.has(key)) {
+        nextParams.delete(key);
+        shouldReplaceSearch = true;
+      }
+    });
+
+    if (shouldReplaceSearch) {
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextParams.toString() ? `?${nextParams.toString()}` : '',
+        },
+        { replace: true }
+      );
+    }
+
     handleSectionChange(section);
+    setSelectedPinId(null);
+    setFocusedPinId(null);
+    clearCreatedPinState();
     setIsPinCardExpanded(false);
+  }
+
+  function handleMapCanvasClick(coordinates) {
+    if (selectedPin || effectiveSelectedPinId || isPinCardExpanded) {
+      setSelectedPinId(null);
+      setFocusedPinId(null);
+      clearCreatedPinState();
+      setIsPinCardExpanded(false);
+      return;
+    }
+
+    handleMapLocationSelect(coordinates);
   }
 
   function handleDirectionsClick() {
@@ -194,17 +319,19 @@ export function MapPage() {
 
   return (
     <section className="map-screen map-theme-night">
-      <CityMap
-        pins={visiblePins}
-        selectedPinId={effectiveSelectedPinId}
-        focusedPinId={focusedPinId || createdPin?.id || null}
-        previewCoordinates={selectedCoordinates}
-        animatePreviewPin={mapSettings.animatePreviewPin}
-        mapStyle={MAPLIBRE_DARK_STYLE}
-        onMapClick={handleMapLocationSelect}
-        onPinSelect={handlePinSelect}
-        onMapReady={setMapActions}
-      />
+      <Suspense fallback={<MapCanvasFallback />}>
+        <CityMap
+          pins={visiblePins}
+          selectedPinId={effectiveSelectedPinId}
+          focusedPinId={focusedPinId || createdPin?.id || null}
+          previewCoordinates={selectedCoordinates}
+          animatePreviewPin={mapSettings.animatePreviewPin}
+          mapStyle={MAPLIBRE_DARK_STYLE}
+          onMapClick={handleMapCanvasClick}
+          onPinSelect={handlePinSelect}
+          onMapReady={setMapActions}
+        />
+      </Suspense>
 
       <div className="map-overlay-shell">
         <div className="map-top-stack">
@@ -232,6 +359,7 @@ export function MapPage() {
             {!isAddPinPanelOpen ? (
               <div className="map-feedback-stack">
                 {pinsError ? <div className="map-alert map-alert-error">{pinsError}</div> : null}
+                {!pinsError && savedPinsError ? <div className="map-alert map-alert-error">{savedPinsError}</div> : null}
                 {!pinsError && shouldShowNoResults ? (
                   <div className="map-alert map-alert-empty" role="status" aria-live="polite">
                     No pins match this view. Try clearing search or switching filters.
@@ -269,40 +397,46 @@ export function MapPage() {
           onSectionChange={handleMapSectionChange}
           sectionMeta={sectionMeta}
           onSettingsClick={() => {
+            loadSettingsPanelModule();
             setIsSettingsOpen(true);
             if (!isDesktopViewport()) {
               setIsSidebarOpen(false);
             }
           }}
-          onCreatePinClick={openAddPinPanel}
+          onCreatePinClick={() => {
+            loadAddPinPanelModule();
+            openAddPinPanel();
+          }}
         />
 
-        <SettingsPanel
-          isOpen={isSettingsOpen}
-          settings={mapSettings}
-          onToggle={toggleMapSetting}
-          onClose={() => setIsSettingsOpen(false)}
-        />
+        <Suspense fallback={<DeferredPanelFallback />}>
+          <SettingsPanel
+            isOpen={isSettingsOpen}
+            settings={mapSettings}
+            onToggle={toggleMapSetting}
+            onClose={() => setIsSettingsOpen(false)}
+          />
+        </Suspense>
 
-        <AddPinPanel
-          user={user}
-          values={addPinValues}
-          errors={addPinErrors}
-          categories={categoryOptions}
-          isSubmitting={isAddPinSubmitting}
-          submitError={addPinSubmitError}
-          selectedCoordinates={selectedCoordinates}
-          onFieldChange={handleAddPinFieldChange}
-          onTypeChange={handleAddPinTypeChange}
-          onCategoryChange={handleAddPinCategoryChange}
-          onSubmit={handleAddPinSubmit}
-          onCancel={closeAddPinPanel}
-          variant="drawer"
-          isOpen={isAddPinPanelOpen}
-          locationPrompt="Click anywhere on the map to choose where this new pin should live. The form will keep listening while you pick the location."
-          submitDisabled={!selectedCoordinates}
-          cancelLabel="Close Panel"
-        />
+        <Suspense fallback={<DeferredPanelFallback />}>
+          <AddPinPanel
+            user={user}
+            values={addPinValues}
+            errors={addPinErrors}
+            isSubmitting={isAddPinSubmitting}
+            submitError={addPinSubmitError}
+            selectedCoordinates={selectedCoordinates}
+            onFieldChange={handleAddPinFieldChange}
+            onTypeChange={handleAddPinTypeChange}
+            onSubmit={handleAddPinSubmit}
+            onCancel={closeAddPinPanel}
+            variant="drawer"
+            isOpen={isAddPinPanelOpen}
+            locationPrompt="Click anywhere on the map to choose where this new pin should live. The form will keep listening while you pick the location."
+            submitDisabled={!selectedCoordinates}
+            cancelLabel="Close Panel"
+          />
+        </Suspense>
 
         <MapControls
           onLocate={handleLocateUser}
@@ -311,15 +445,17 @@ export function MapPage() {
         />
 
         {!isAddPinPanelOpen ? (
-          <PinCard
-            pin={selectedPin}
-            isSaved={selectedPin ? savedPinIds.includes(selectedPin.id) : false}
-            isExpanded={isPinCardExpanded}
-            onToggleExpanded={() => setIsPinCardExpanded((current) => !current)}
-            onDirectionsClick={handleDirectionsClick}
-            onShareClick={handleShareClick}
-            onToggleSaved={() => selectedPin && toggleSavedPin(selectedPin.id)}
-          />
+          <Suspense fallback={<DeferredPanelFallback />}>
+            <PinCard
+              pin={selectedPin}
+              isSaved={selectedPin ? savedPinIds.includes(selectedPin.id) : false}
+              isExpanded={isPinCardExpanded}
+              onToggleExpanded={() => setIsPinCardExpanded((current) => !current)}
+              onDirectionsClick={handleDirectionsClick}
+              onShareClick={handleShareClick}
+              onToggleSaved={() => void (selectedPin && toggleSavedPin(selectedPin.id))}
+            />
+          </Suspense>
         ) : null}
       </div>
     </section>

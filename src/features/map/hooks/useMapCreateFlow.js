@@ -77,6 +77,7 @@ export function useMapCreateFlow({
 
   function closeAddPinPanel() {
     setIsManualAddPinPanelOpen(false);
+    setSelectedCoordinates(null);
   }
 
   function handleMapLocationSelect(coordinates) {
@@ -107,6 +108,11 @@ export function useMapCreateFlow({
     setSelectedCoordinates(null);
   }
 
+  function clearCreatedPinState() {
+    setCreatedPinId(null);
+    setFocusedPinId(null);
+  }
+
   return {
     selectedCoordinates,
     setSelectedCoordinates,
@@ -119,5 +125,6 @@ export function useMapCreateFlow({
     closeAddPinPanel,
     handleMapLocationSelect,
     handleCreateSuccess,
+    clearCreatedPinState,
   };
 }

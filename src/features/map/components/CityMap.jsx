@@ -5,22 +5,6 @@ import {
   MAP_CENTER_BAKU_LNGLAT,
 } from '../constants/mapConfig';
 import { MapCanvas } from '../../../lib/map/MapCanvas';
-import { buildMapPopupNode } from '../utils/mapboxPopup';
-
-const markerStyles = {
-  event: {
-    className: 'map-marker map-marker-event',
-    label: 'E',
-  },
-  place: {
-    className: 'map-marker map-marker-place',
-    label: 'P',
-  },
-  preview: {
-    className: 'map-marker map-marker-preview',
-    label: '+',
-  },
-};
 
 export function CityMap({
   pins,
@@ -38,33 +22,53 @@ export function CityMap({
     [focusedPinId, pins]
   );
 
-  const markers = useMemo(
-    () => pins.map((pin) => {
-      const markerConfig = markerStyles[pin.type] ?? markerStyles.place;
-      const [lat, lng] = pin.coordinates;
-
-      return {
-        id: pin.id,
-        lat,
-        lng,
-        className: markerConfig.className,
-        label: markerConfig.label,
-        isSelected: pin.id === selectedPinId,
-        popupNode: buildMapPopupNode(pin),
-        onSelect: () => onPinSelect?.(pin),
-      };
-    }),
-    [onPinSelect, pins, selectedPinId]
+  const pinLookup = useMemo(
+    () => new Map(pins.map((pin) => [pin.id, pin])),
+    [pins]
   );
 
-  const previewMarker = previewCoordinates
-    ? {
-        lat: previewCoordinates.lat,
-        lng: previewCoordinates.lng,
-        className: `${markerStyles.preview.className}${animatePreviewPin ? ' is-animated' : ''}`.trim(),
-        label: markerStyles.preview.label,
-      }
-    : null;
+  const pinFeatures = useMemo(
+    () => ({
+      type: 'FeatureCollection',
+      features: pins.map((pin) => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [pin.coordinates[1], pin.coordinates[0]],
+        },
+        properties: {
+          id: pin.id,
+          pinType: pin.type,
+          label: pin.type === 'event' ? 'E' : 'P',
+          isSelected: pin.id === selectedPinId,
+        },
+      })),
+    }),
+    [pins, selectedPinId]
+  );
+
+  const previewFeatures = useMemo(
+    () => ({
+      type: 'FeatureCollection',
+      features: previewCoordinates
+        ? [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [previewCoordinates.lng, previewCoordinates.lat],
+              },
+              properties: {
+                id: 'preview-pin',
+                label: '+',
+                radius: animatePreviewPin ? 16 : 14,
+              },
+            },
+          ]
+        : [],
+    }),
+    [animatePreviewPin, previewCoordinates]
+  );
 
   const focusTarget = focusedPin
     ? {
@@ -83,9 +87,11 @@ export function CityMap({
         maxBounds={AZERBAIJAN_MAX_BOUNDS}
         mapStyle={mapStyle}
         onMapClick={onMapClick}
+        onPinSelect={onPinSelect}
         onMapReady={onMapReady}
-        markers={markers}
-        previewMarker={previewMarker}
+        pinFeatures={pinFeatures}
+        previewFeatures={previewFeatures}
+        pinLookup={pinLookup}
         focusTarget={focusTarget}
       />
     </div>

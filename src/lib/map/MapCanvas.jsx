@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AZERBAIJAN_MAX_BOUNDS,
   DEFAULT_MAP_BEARING,
@@ -8,6 +7,7 @@ import {
   MAP_CENTER_BAKU_LNGLAT,
   MAPLIBRE_DARK_STYLE,
 } from '../../features/map/constants/mapConfig';
+import { loadMapRuntime } from './mapRuntimeLoader';
 
 const GEOLOCATION_MESSAGES = {
   unsupported: 'This browser cannot access your location.',
@@ -18,17 +18,12 @@ const GEOLOCATION_MESSAGES = {
   unknown: 'We could not determine your location right now. Please try again.',
 };
 
-function createMarkerElement(className, label) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'map-marker-wrapper';
-
-  const marker = document.createElement('span');
-  marker.className = className;
-  marker.textContent = label;
-
-  wrapper.appendChild(marker);
-  return { wrapper, marker };
-}
+const PIN_SOURCE_ID = 'undrpin-pins-source';
+const PIN_CIRCLE_LAYER_ID = 'undrpin-pins-circle';
+const PIN_SYMBOL_LAYER_ID = 'undrpin-pins-symbol';
+const PREVIEW_SOURCE_ID = 'undrpin-preview-source';
+const PREVIEW_CIRCLE_LAYER_ID = 'undrpin-preview-circle';
+const PREVIEW_SYMBOL_LAYER_ID = 'undrpin-preview-symbol';
 
 function normalizeMapClick(event) {
   return {
@@ -65,6 +60,143 @@ function mapGeolocationError(error) {
   }
 }
 
+function createEmptyFeatureCollection() {
+  return {
+    type: 'FeatureCollection',
+    features: [],
+  };
+}
+
+function ensureGeoJsonSource(map, id, data) {
+  const source = map.getSource(id);
+
+  if (source) {
+    source.setData(data);
+    return;
+  }
+
+  map.addSource(id, {
+    type: 'geojson',
+    data,
+  });
+}
+
+function ensureLayer(map, layerConfig) {
+  if (!map.getLayer(layerConfig.id)) {
+    map.addLayer(layerConfig);
+  }
+}
+
+function ensurePinLayers(map, pinData, previewData) {
+  ensureGeoJsonSource(map, PIN_SOURCE_ID, pinData);
+  ensureGeoJsonSource(map, PREVIEW_SOURCE_ID, previewData);
+
+  ensureLayer(map, {
+    id: PIN_CIRCLE_LAYER_ID,
+    type: 'circle',
+    source: PIN_SOURCE_ID,
+    paint: {
+      'circle-radius': [
+        'case',
+        ['boolean', ['get', 'isSelected'], false],
+        15,
+        11,
+      ],
+      'circle-color': [
+        'match',
+        ['get', 'pinType'],
+        'event',
+        '#00f4fe',
+        'place',
+        '#ca98ff',
+        '#ca98ff',
+      ],
+      'circle-opacity': 0.95,
+      'circle-stroke-width': [
+        'case',
+        ['boolean', ['get', 'isSelected'], false],
+        3,
+        2,
+      ],
+      'circle-stroke-color': [
+        'case',
+        ['boolean', ['get', 'isSelected'], false],
+        '#ffffff',
+        [
+          'match',
+          ['get', 'pinType'],
+          'event',
+          '#dffcff',
+          'place',
+          '#f6e8ff',
+          '#ffffff',
+        ],
+      ],
+      'circle-blur': [
+        'case',
+        ['boolean', ['get', 'isSelected'], false],
+        0.16,
+        0.05,
+      ],
+    },
+  });
+
+  ensureLayer(map, {
+    id: PIN_SYMBOL_LAYER_ID,
+    type: 'symbol',
+    source: PIN_SOURCE_ID,
+    layout: {
+      'text-field': ['get', 'label'],
+      'text-size': [
+        'case',
+        ['boolean', ['get', 'isSelected'], false],
+        13,
+        11,
+      ],
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': 'rgba(6, 10, 16, 0.86)',
+      'text-halo-width': 1.4,
+    },
+  });
+
+  ensureLayer(map, {
+    id: PREVIEW_CIRCLE_LAYER_ID,
+    type: 'circle',
+    source: PREVIEW_SOURCE_ID,
+    paint: {
+      'circle-radius': ['coalesce', ['get', 'radius'], 14],
+      'circle-color': '#b283ff',
+      'circle-opacity': 0.9,
+      'circle-stroke-width': 3,
+      'circle-stroke-color': '#ffffff',
+      'circle-blur': 0.12,
+    },
+  });
+
+  ensureLayer(map, {
+    id: PREVIEW_SYMBOL_LAYER_ID,
+    type: 'symbol',
+    source: PREVIEW_SOURCE_ID,
+    layout: {
+      'text-field': ['get', 'label'],
+      'text-size': 14,
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': 'rgba(6, 10, 16, 0.92)',
+      'text-halo-width': 1.5,
+    },
+  });
+}
+
 export function MapCanvas({
   className = 'mapbox-map',
   initialCenter = MAP_CENTER_BAKU_LNGLAT,
@@ -73,21 +205,27 @@ export function MapCanvas({
   minZoom = 7,
   maxZoom = 16,
   onMapClick,
+  onPinSelect,
   onMapReady,
-  markers = [],
-  previewMarker = null,
+  pinFeatures = createEmptyFeatureCollection(),
+  previewFeatures = createEmptyFeatureCollection(),
+  pinLookup = new Map(),
   focusTarget = null,
   mapStyle = MAPLIBRE_DARK_STYLE,
   showNavigation = false,
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
-  const markersRef = useRef([]);
-  const callbacksRef = useRef({ onMapClick, onMapReady });
+  const callbacksRef = useRef({ onMapClick, onMapReady, onPinSelect });
   const focusTargetRef = useRef(focusTarget);
   const styleRef = useRef(mapStyle);
   const styleLoadTimeoutRef = useRef(null);
-  const dismissedPopupPinIdRef = useRef(null);
+  const maplibreRef = useRef(null);
+  const pinFeaturesRef = useRef(pinFeatures);
+  const previewFeaturesRef = useRef(previewFeatures);
+  const pinLookupRef = useRef(pinLookup);
+  const [isMaplibreReady, setIsMaplibreReady] = useState(false);
+  const [isMapMounted, setIsMapMounted] = useState(false);
 
   const clearStyleLoadTimeout = useCallback(() => {
     if (styleLoadTimeoutRef.current) {
@@ -115,18 +253,59 @@ export function MapCanvas({
   }, [clearStyleLoadTimeout]);
 
   useEffect(() => {
-    callbacksRef.current = { onMapClick, onMapReady };
-  }, [onMapClick, onMapReady]);
+    callbacksRef.current = { onMapClick, onMapReady, onPinSelect };
+  }, [onMapClick, onMapReady, onPinSelect]);
 
   useEffect(() => {
     focusTargetRef.current = focusTarget;
   }, [focusTarget]);
 
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) {
+    pinFeaturesRef.current = pinFeatures;
+    pinLookupRef.current = pinLookup;
+
+    const source = mapRef.current?.getSource(PIN_SOURCE_ID);
+    if (source) {
+      source.setData(pinFeatures);
+    }
+  }, [pinFeatures, pinLookup]);
+
+  useEffect(() => {
+    previewFeaturesRef.current = previewFeatures;
+
+    const source = mapRef.current?.getSource(PREVIEW_SOURCE_ID);
+    if (source) {
+      source.setData(previewFeatures);
+    }
+  }, [previewFeatures]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadMaplibre() {
+      const runtime = await loadMapRuntime();
+
+      if (!isActive) {
+        return;
+      }
+
+      maplibreRef.current = runtime;
+      setIsMaplibreReady(true);
+    }
+
+    void loadMaplibre();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMaplibreReady || !containerRef.current || mapRef.current || !maplibreRef.current) {
       return undefined;
     }
 
+    const maplibregl = maplibreRef.current;
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: styleRef.current,
@@ -144,8 +323,13 @@ export function MapCanvas({
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     }
 
+    const syncPinLayers = () => {
+      ensurePinLayers(map, pinFeaturesRef.current, previewFeaturesRef.current);
+    };
+
     map.on('style.load', () => {
       clearStyleLoadTimeout();
+      syncPinLayers();
     });
 
     map.on('error', (event) => {
@@ -171,7 +355,25 @@ export function MapCanvas({
     });
 
     map.on('click', (event) => {
+      const renderedPinFeatures = map.queryRenderedFeatures(event.point, {
+        layers: [PIN_CIRCLE_LAYER_ID, PIN_SYMBOL_LAYER_ID],
+      });
+
+      const clickedFeatureId = renderedPinFeatures[0]?.properties?.id;
+      if (clickedFeatureId) {
+        const clickedPin = pinLookupRef.current.get(clickedFeatureId);
+        if (clickedPin) {
+          callbacksRef.current.onPinSelect?.(clickedPin);
+          return;
+        }
+      }
+
       callbacksRef.current.onMapClick?.(normalizeMapClick(event));
+    });
+
+    map.once('load', () => {
+      syncPinLayers();
+      setIsMapMounted(true);
     });
 
     const actions = {
@@ -209,8 +411,7 @@ export function MapCanvas({
             maximumAge: 0,
           }
         );
-      },
-      ),
+      }),
       focusPin: ({ lng, lat }) => {
         map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: 800 });
       },
@@ -223,11 +424,6 @@ export function MapCanvas({
     return () => {
       clearStyleLoadTimeout();
       callbacksRef.current.onMapReady?.(null);
-      markersRef.current.forEach(({ marker, popup }) => {
-        popup?.remove();
-        marker.remove();
-      });
-      markersRef.current = [];
       map.remove();
       mapRef.current = null;
     };
@@ -235,6 +431,7 @@ export function MapCanvas({
     clearStyleLoadTimeout,
     initialCenter,
     initialZoom,
+    isMaplibreReady,
     maxBounds,
     maxZoom,
     minZoom,
@@ -255,65 +452,6 @@ export function MapCanvas({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) {
-      return;
-    }
-
-    markersRef.current.forEach(({ marker, popup }) => {
-      popup?.remove();
-      marker.remove();
-    });
-    markersRef.current = [];
-
-    if (previewMarker) {
-      const { wrapper } = createMarkerElement(previewMarker.className, previewMarker.label);
-      const marker = new maplibregl.Marker({ element: wrapper, anchor: 'bottom' })
-        .setLngLat([previewMarker.lng, previewMarker.lat])
-        .addTo(map);
-
-      markersRef.current.push({ marker, popup: null });
-    }
-
-    markers.forEach((pin) => {
-      const markerClass = `${pin.className}${pin.isSelected ? ' is-selected' : ''}`;
-      const { wrapper } = createMarkerElement(markerClass, pin.label);
-      const popup = pin.popupNode
-        ? new maplibregl.Popup({ offset: 16, closeButton: true }).setDOMContent(pin.popupNode)
-        : null;
-
-      if (popup) {
-        popup.on('open', () => {
-          dismissedPopupPinIdRef.current = null;
-          pin.onSelect?.();
-        });
-        popup.on('close', () => {
-          dismissedPopupPinIdRef.current = pin.id;
-        });
-      }
-
-      const marker = new maplibregl.Marker({ element: wrapper, anchor: 'bottom' })
-        .setLngLat([pin.lng, pin.lat]);
-
-      if (popup) {
-        marker.setPopup(popup);
-      }
-
-      wrapper.addEventListener('click', () => {
-        dismissedPopupPinIdRef.current = null;
-        pin.onSelect?.();
-      });
-      marker.addTo(map);
-
-      if (pin.isSelected && popup && dismissedPopupPinIdRef.current !== pin.id) {
-        marker.togglePopup();
-      }
-
-      markersRef.current.push({ marker, popup });
-    });
-  }, [markers, previewMarker]);
-
-  useEffect(() => {
-    const map = mapRef.current;
     const target = focusTargetRef.current;
 
     if (!map || !target) {
@@ -328,6 +466,18 @@ export function MapCanvas({
   }, [focusTarget?.id, focusTarget?.lat, focusTarget?.lng]);
 
   return (
-    <div ref={containerRef} className={className} />
+    <div className="map-canvas">
+      <div ref={containerRef} className={className} />
+      {!isMaplibreReady || !isMapMounted ? (
+        <div className="map-canvas-loading" aria-hidden="true">
+          <div className="map-canvas-loading-grid" />
+          <div className="map-canvas-loading-card">
+            <span className="map-canvas-loading-kicker">Map Loading</span>
+            <strong>Preparing the city layer</strong>
+            <span>Markers and controls will appear here in a moment.</span>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

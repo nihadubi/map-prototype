@@ -15,14 +15,6 @@ export function validatePinForm(values) {
     errors.title = 'Title is required.';
   }
 
-  if (!values.description.trim()) {
-    errors.description = 'Description is required.';
-  }
-
-  if (!values.category.trim()) {
-    errors.category = 'Category is required.';
-  }
-
   if (!isFiniteNumber(values.lat)) {
     errors.lat = 'Latitude must be a valid number.';
   } else if (Number(values.lat) < -90 || Number(values.lat) > 90) {

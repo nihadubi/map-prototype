@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-const SAVED_PINS_STORAGE_KEY = 'undrpin.savedPins';
-const LEGACY_SAVED_PINS_STORAGE_KEY = 'citylayer.savedPins';
 const MAP_SETTINGS_STORAGE_KEY = 'undrpin.mapSettings';
 const LEGACY_MAP_SETTINGS_STORAGE_KEY = 'citylayer.mapSettings';
 
@@ -10,21 +8,6 @@ const defaultMapSettings = {
   sidebarExpandOnHover: true,
   animatePreviewPin: true,
 };
-
-function readSavedPinIds() {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  try {
-    const raw = window.localStorage.getItem(SAVED_PINS_STORAGE_KEY)
-      || window.localStorage.getItem(LEGACY_SAVED_PINS_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (error) {
-    console.error('Failed to read saved pins:', error);
-    return [];
-  }
-}
 
 function readMapSettings() {
   if (typeof window === 'undefined') {
@@ -42,26 +25,12 @@ function readMapSettings() {
 }
 
 export function useMapPreferences() {
-  const [savedPinIds, setSavedPinIds] = useState(readSavedPinIds);
   const [mapSettings, setMapSettings] = useState(readMapSettings);
-
-  useEffect(() => {
-    window.localStorage.setItem(SAVED_PINS_STORAGE_KEY, JSON.stringify(savedPinIds));
-    window.localStorage.removeItem(LEGACY_SAVED_PINS_STORAGE_KEY);
-  }, [savedPinIds]);
 
   useEffect(() => {
     window.localStorage.setItem(MAP_SETTINGS_STORAGE_KEY, JSON.stringify(mapSettings));
     window.localStorage.removeItem(LEGACY_MAP_SETTINGS_STORAGE_KEY);
   }, [mapSettings]);
-
-  function toggleSavedPin(pinId) {
-    setSavedPinIds((current) => (
-      current.includes(pinId)
-        ? current.filter((id) => id !== pinId)
-        : [...current, pinId]
-    ));
-  }
 
   function toggleMapSetting(key, forcedValue) {
     setMapSettings((current) => ({
@@ -71,9 +40,7 @@ export function useMapPreferences() {
   }
 
   return {
-    savedPinIds,
     mapSettings,
-    toggleSavedPin,
     toggleMapSetting,
   };
 }

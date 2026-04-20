@@ -91,6 +91,8 @@ export const supabasePinsAdapter = {
       throw new Error('You must be signed in to create a pin.');
     }
 
+    const userId = user.id || user.uid;
+
     try {
       await ensureSupabaseProfile(user.rawUser || user, { strict: true });
     } catch (profileError) {
@@ -99,10 +101,11 @@ export const supabasePinsAdapter = {
     }
 
     const payload = {
+      created_by: userId,
       type: values.type,
       title: values.title.trim(),
       description: values.description.trim(),
-      category: values.category.trim(),
+      category: values.category.trim() || 'community',
       city_slug: 'baku',
       lat: Number(values.lat),
       lng: Number(values.lng),
@@ -123,5 +126,101 @@ export const supabasePinsAdapter = {
     }
 
     return data.id;
+  },
+
+  async getSavedPinIds(user) {
+    if (!supabase) {
+      throw new Error('Supabase client is not configured.');
+    }
+
+    if (!user?.id && !user?.uid) {
+      return [];
+    }
+
+    const userId = user.id || user.uid;
+    const { data, error } = await supabase
+      .from('saved_pins')
+      .select('pin_id')
+      .eq('user_id', userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return (data || []).map((row) => row.pin_id).filter(Boolean);
+  },
+
+  async savePin(pinId, user) {
+    if (!supabase) {
+      throw new Error('Supabase client is not configured.');
+    }
+
+    if (!user?.id && !user?.uid) {
+      throw new Error('You must be signed in to save a pin.');
+    }
+
+    const userId = user.id || user.uid;
+    const { error } = await supabase.from('saved_pins').upsert(
+      {
+        user_id: userId,
+        pin_id: pinId,
+      },
+      { onConflict: 'user_id,pin_id', ignoreDuplicates: true }
+    );
+
+    if (error) {
+      throw error;
+    }
+  },
+
+  async removeSavedPin(pinId, user) {
+    if (!supabase) {
+      throw new Error('Supabase client is not configured.');
+    }
+
+    if (!user?.id && !user?.uid) {
+      throw new Error('You must be signed in to remove a saved pin.');
+    }
+
+    const userId = user.id || user.uid;
+    const { error } = await supabase
+      .from('saved_pins')
+      .delete()
+      .eq('user_id', userId)
+      .eq('pin_id', pinId);
+
+    if (error) {
+      throw error;
+    }
+  },
+
+  async mergeLegacySavedPins(pinIds, user) {
+    if (!supabase) {
+      throw new Error('Supabase client is not configured.');
+    }
+
+    if (!user?.id && !user?.uid) {
+      throw new Error('You must be signed in to merge saved pins.');
+    }
+
+    const uniquePinIds = [...new Set((pinIds || []).filter(Boolean))];
+
+    if (uniquePinIds.length === 0) {
+      return;
+    }
+
+    const userId = user.id || user.uid;
+    const payload = uniquePinIds.map((pinId) => ({
+      user_id: userId,
+      pin_id: pinId,
+    }));
+
+    const { error } = await supabase
+      .from('saved_pins')
+      .upsert(payload, { onConflict: 'user_id,pin_id', ignoreDuplicates: true });
+
+    if (error) {
+      throw error;
+    }
   },
 };

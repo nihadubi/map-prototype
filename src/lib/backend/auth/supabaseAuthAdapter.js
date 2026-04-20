@@ -25,14 +25,22 @@ function createProfileSetupError(message, cause) {
 }
 
 function isMissingProfilesTableError(error) {
+  const code = String(error?.code || '').toLowerCase();
   const message = String(error?.message || '').toLowerCase();
   const details = String(error?.details || '').toLowerCase();
+  const hint = String(error?.hint || '').toLowerCase();
 
   return (
-    message.includes('relation')
+    code === 'pgrst205'
+    || message.includes('relation')
     || message.includes('schema cache')
     || details.includes('profiles')
+    || hint.includes('profiles')
   );
+}
+
+function logProfileBootstrapFailure(context, error) {
+  console.error(context, error, error?.cause ?? null);
 }
 
 async function upsertProfileRow(user) {
@@ -158,7 +166,7 @@ export const supabaseAuthAdapter = {
           callback(mapSupabaseUser(user));
         }
       } catch (error) {
-        console.error('UndrPin session user profile bootstrap failed:', error);
+        logProfileBootstrapFailure('UndrPin session user profile bootstrap failed:', error);
         await signOutIfPossible();
         if (isActive) {
           callback(null);

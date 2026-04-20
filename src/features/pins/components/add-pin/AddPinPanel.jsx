@@ -1,18 +1,14 @@
-import { CategoryChips } from './CategoryChips';
-import { LocationPreview } from './LocationPreview';
 import { TypeSelector } from './TypeSelector';
 
 export function AddPinPanel({
   user,
   values,
   errors,
-  categories,
   isSubmitting,
   submitError,
   selectedCoordinates,
   onFieldChange,
   onTypeChange,
-  onCategoryChange,
   onSubmit,
   onCancel,
   variant = 'page',
@@ -62,7 +58,7 @@ export function AddPinPanel({
             </div>
           </div>
           <p className="max-w-[26rem] text-sm leading-6 text-slate-400">
-            Click anywhere on the map, review the coordinates, and publish a new {values.type} to UndrPin.
+            Click anywhere on the map, choose the spot, and publish a new {values.type} to UndrPin.
           </p>
           <p className="mt-3 text-xs font-medium text-slate-500">Signed in as {user?.displayName || user?.email}</p>
         </div>
@@ -91,7 +87,7 @@ export function AddPinPanel({
                 id="title"
                 name="title"
                 className={fieldBaseClass}
-                placeholder="What's this spot called?…"
+                placeholder="What's this spot called?..."
                 type="text"
                 value={values.title}
                 onChange={onFieldChange}
@@ -103,13 +99,13 @@ export function AddPinPanel({
 
             <div>
               <label className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-[0.24em] text-slate-400" htmlFor="description">
-                Description
+                Description <span className="text-slate-500 normal-case">(optional)</span>
               </label>
               <textarea
                 id="description"
                 name="description"
                 className={`${fieldBaseClass} resize-none`}
-                placeholder={values.type === 'event' ? 'What should people know before they join?…' : 'Tell the community what makes this place worth saving…'}
+                placeholder={values.type === 'event' ? 'What should people know before they join?...' : 'Tell the community what makes this place worth saving...'}
                 rows="4"
                 value={values.description}
                 onChange={onFieldChange}
@@ -119,11 +115,6 @@ export function AddPinPanel({
               {errors.description ? <p className="field-error mt-2">{errors.description}</p> : null}
             </div>
           </div>
-
-          <LocationPreview coordinates={selectedCoordinates} error={errors.lat || errors.lng} />
-
-          <CategoryChips categories={categories} value={values.category} onChange={onCategoryChange} />
-          {errors.category ? <p className="field-error -mt-4">{errors.category}</p> : null}
 
           {values.type === 'event' ? (
             <div className="space-y-4 rounded-[1.5rem] bg-white/[0.02] p-4 ring-1 ring-white/8">
@@ -181,7 +172,7 @@ export function AddPinPanel({
             className="flex w-full items-center justify-center gap-2 rounded-[1.15rem] bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 py-4 text-sm font-bold text-white shadow-[0_20px_45px_rgba(99,102,241,0.35)] transition hover:shadow-[0_24px_55px_rgba(99,102,241,0.42)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isSubmitting || submitDisabled}
           >
-            <span>{isSubmitting ? 'Creating Pin…' : 'Create Pin'}</span>
+            <span>{isSubmitting ? 'Creating Pin...' : 'Create Pin'}</span>
             <span className="material-symbols-outlined text-lg" aria-hidden="true">arrow_forward</span>
           </button>
           <button type="button" className="mt-3 w-full py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-slate-300" onClick={onCancel} disabled={isSubmitting}>

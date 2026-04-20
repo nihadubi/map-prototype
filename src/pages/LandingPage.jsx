@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../app/providers/useAuth';
+import { preloadCityMap } from '../features/map/utils/cityMapLoader';
 
 const featureItems = [
   {
@@ -37,6 +39,37 @@ const steps = [
 export function LandingPage() {
   const { isAuthenticated } = useAuth();
 
+  useEffect(() => {
+    let timeoutId = 0;
+    let idleCallbackId = 0;
+
+    function schedulePreload() {
+      preloadCityMap();
+    }
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleCallbackId = window.requestIdleCallback(() => {
+        schedulePreload();
+      }, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(schedulePreload, 1600);
+    }
+
+    return () => {
+      if (idleCallbackId && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleCallbackId);
+      }
+
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
+  function handleMapIntent() {
+    preloadCityMap();
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-[#070b11] text-slate-100">
       <div className="relative isolate">
@@ -63,6 +96,8 @@ export function LandingPage() {
               <Link
                 to={isAuthenticated ? '/app' : '/auth'}
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ca98ff] to-[#b283ff] px-4 py-2.5 text-sm font-bold text-[#1b1023] no-underline shadow-[0_16px_36px_rgba(202,152,255,0.28)] transition hover:translate-y-[-1px]"
+                onMouseEnter={isAuthenticated ? handleMapIntent : undefined}
+                onFocus={isAuthenticated ? handleMapIntent : undefined}
               >
                 <span>{isAuthenticated ? 'Open Map' : 'Get Access'}</span>
               </Link>
@@ -87,6 +122,8 @@ export function LandingPage() {
                 <Link
                   to="/app"
                   className="inline-flex items-center justify-center gap-2 rounded-[1.25rem] bg-gradient-to-r from-[#ca98ff] via-[#b283ff] to-[#00f4fe] px-6 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-[#090b11] no-underline shadow-[0_24px_54px_rgba(202,152,255,0.28)] transition hover:translate-y-[-1px]"
+                  onMouseEnter={handleMapIntent}
+                  onFocus={handleMapIntent}
                 >
                   Enter the Map
                 </Link>
@@ -100,9 +137,9 @@ export function LandingPage() {
 
               <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
                 <span>Map-first UX</span>
-                <span className="text-slate-700" aria-hidden="true">•</span>
+                <span className="text-slate-700" aria-hidden="true">&middot;</span>
                 <span>Live event + place pins</span>
-                <span className="text-slate-700" aria-hidden="true">•</span>
+                <span className="text-slate-700" aria-hidden="true">&middot;</span>
                 <span>Community-curated Baku layer</span>
               </div>
 
@@ -243,6 +280,8 @@ export function LandingPage() {
               <Link
                 to="/app"
                 className="inline-flex items-center justify-center rounded-[1.15rem] bg-gradient-to-r from-[#ca98ff] to-[#b283ff] px-6 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-[#100916] no-underline shadow-[0_18px_40px_rgba(202,152,255,0.26)] transition hover:translate-y-[-1px]"
+                onMouseEnter={handleMapIntent}
+                onFocus={handleMapIntent}
               >
                 Open the Map
               </Link>

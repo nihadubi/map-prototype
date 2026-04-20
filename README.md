@@ -20,9 +20,9 @@
 
 ## Preview
 
-Replace the image below with your latest product screenshot before publishing the repo.
+Current landing preview from the local prototype:
 
-![UndrPin Preview](images/preview.png)
+![UndrPin Preview](artifacts/screenshots/landing.png)
 
 ---
 
@@ -40,6 +40,7 @@ The current prototype is focused on **Azerbaijan**, with **Baku** as the main st
 - Premium dark glass UI
 - Distinct event and place pins
 - In-map create-pin flow
+- Auth-backed saved pins
 - Custom marker system
 - Supabase auth and pins backend
 - Realtime-ready pin updates
@@ -84,6 +85,12 @@ Copy `.env.example` to `.env` and add your Supabase values:
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_publishable_key
+```
+
+Apply the database schema before testing auth or pin creation:
+
+```bash
+# run the SQL in supabase/schema.sql inside the Supabase SQL editor
 ```
 
 Run locally:
@@ -141,11 +148,21 @@ Before deploying:
 
 - set `VITE_SUPABASE_URL`
 - set `VITE_SUPABASE_ANON_KEY`
-- make sure `profiles` and `pins` tables exist
+- apply [`supabase/schema.sql`](supabase/schema.sql)
 - make sure Supabase RLS policies are configured for auth, profiles, and pins
 - verify signup, login, pin read, and pin creation in a production-like environment
 
 UndrPin is a static frontend app, so any standard Vite-compatible host works well for deployment.
+
+---
+
+## Next Priorities
+
+- Pin edit and archive flows
+- Richer filtering by category, date, and viewport
+- Image uploads for pins
+- Map load and bundle optimization beyond the first-pass shell improvements
+- Production monitoring and stronger end-to-end coverage
 
 ---
 
