@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPin, updatePin } from '../../../lib/backend/pinsClient';
 import { hasValidationErrors, validatePinForm } from '../utils/pinValidation';
 
@@ -69,6 +69,18 @@ function buildFormValues(initialCoordinates, initialPin) {
   };
 }
 
+function getPinCoordinate(pin, axis) {
+  if (!pin) {
+    return null;
+  }
+
+  if (axis === 'lat') {
+    return pin.lat ?? pin.coordinates?.[0] ?? null;
+  }
+
+  return pin.lng ?? pin.coordinates?.[1] ?? null;
+}
+
 export function useAddPinForm({
   initialCoordinates = null,
   initialPin = null,
@@ -76,40 +88,79 @@ export function useAddPinForm({
   user,
   onSuccess,
 }) {
-  const initialCoordinatesRef = useRef(initialCoordinates);
-  const initialPinRef = useRef(initialPin);
+  const initialPinId = initialPin?.id ?? null;
+  const initialPinType = initialPin?.type ?? initialValues.type;
+  const initialPinTitle = initialPin?.title ?? '';
+  const initialPinDescription = initialPin?.description ?? '';
+  const initialPinCategory = initialPin?.category ?? initialValues.category;
+  const initialPinEventDate = initialPin?.eventDate ?? '';
+  const initialPinStartTime = initialPin?.startTime ?? '';
+  const initialPinPlaceType = initialPin?.placeType ?? '';
+  const initialPinLat = getPinCoordinate(initialPin, 'lat');
+  const initialPinLng = getPinCoordinate(initialPin, 'lng');
+  const initialCoordinateLat = initialCoordinates?.lat ?? null;
+  const initialCoordinateLng = initialCoordinates?.lng ?? null;
+  const initialPinSnapshot = useMemo(() => (
+    initialPinId
+      ? {
+          id: initialPinId,
+          type: initialPinType,
+          title: initialPinTitle,
+          description: initialPinDescription,
+          category: initialPinCategory,
+          eventDate: initialPinEventDate,
+          startTime: initialPinStartTime,
+          placeType: initialPinPlaceType,
+          lat: initialPinLat,
+          lng: initialPinLng,
+        }
+      : null
+  ), [
+    initialPinCategory,
+    initialPinDescription,
+    initialPinEventDate,
+    initialPinId,
+    initialPinLat,
+    initialPinLng,
+    initialPinPlaceType,
+    initialPinStartTime,
+    initialPinTitle,
+    initialPinType,
+  ]);
 
-  useEffect(() => {
-    initialCoordinatesRef.current = initialCoordinates;
-    initialPinRef.current = initialPin;
-  }, [initialCoordinates, initialPin]);
+  const resetValues = useMemo(() => buildFormValues(
+    {
+      lat: initialPinId ? initialPinLat : initialCoordinateLat,
+      lng: initialPinId ? initialPinLng : initialCoordinateLng,
+    },
+    initialPinSnapshot
+  ), [
+    initialCoordinateLat,
+    initialCoordinateLng,
+    initialPinId,
+    initialPinLat,
+    initialPinLng,
+    initialPinSnapshot,
+  ]);
 
   const [values, setValues] = useState(() => ({
-    ...buildFormValues(initialCoordinates, initialPin),
+    ...resetValues,
   }));
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
-    const nextInitialPin = initialPinRef.current;
-    const nextInitialCoordinates = nextInitialPin
-      ? {
-          lat: nextInitialPin.lat ?? nextInitialPin.coordinates?.[0],
-          lng: nextInitialPin.lng ?? nextInitialPin.coordinates?.[1],
-        }
-      : initialCoordinatesRef.current;
-
-    setValues(buildFormValues(nextInitialCoordinates, nextInitialPin));
+    setValues(resetValues);
     setErrors({});
     setSubmitError('');
     setIsSubmitting(false);
-  }, [initialPin?.id, mode]);
+  }, [mode, resetValues]);
 
   useEffect(() => {
     setValues((current) => {
-      const nextLat = initialCoordinates?.lat != null ? String(initialCoordinates.lat) : '';
-      const nextLng = initialCoordinates?.lng != null ? String(initialCoordinates.lng) : '';
+      const nextLat = initialCoordinateLat != null ? String(initialCoordinateLat) : '';
+      const nextLng = initialCoordinateLng != null ? String(initialCoordinateLng) : '';
 
       if (current.lat === nextLat && current.lng === nextLng) {
         return current;
@@ -132,7 +183,7 @@ export function useAddPinForm({
       delete next.lng;
       return next;
     });
-  }, [initialCoordinates?.lat, initialCoordinates?.lng]);
+  }, [initialCoordinateLat, initialCoordinateLng]);
 
   const selectedCoordinates = useMemo(() => {
     if (!values.lat || !values.lng) {
@@ -235,12 +286,12 @@ export function useAddPinForm({
     setIsSubmitting(true);
 
     try {
-      const nextPinId = mode === 'edit' && initialPin?.id
-        ? initialPin.id
+      const nextPinId = mode === 'edit' && initialPinId
+        ? initialPinId
         : await createPin(values, user);
 
-      if (mode === 'edit' && initialPin?.id) {
-        await updatePin(initialPin.id, values, user);
+      if (mode === 'edit' && initialPinId) {
+        await updatePin(initialPinId, values, user);
       }
 
       await onSuccess?.(nextPinId, values, mode);
@@ -252,7 +303,7 @@ export function useAddPinForm({
     } finally {
       setIsSubmitting(false);
     }
-  }, [initialPin?.id, isSubmitting, mode, onSuccess, user, values]);
+  }, [initialPinId, isSubmitting, mode, onSuccess, user, values]);
 
   return {
     values,

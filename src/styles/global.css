@@ -382,6 +382,7 @@ pre {
   position: relative;
   overflow: hidden;
   background: #03050a;
+  isolation: isolate;
 }
 
 .map-screen .maplibregl-map {
@@ -499,6 +500,7 @@ pre {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  isolation: isolate;
 }
 
 .map-overlay-shell > * {
@@ -735,34 +737,49 @@ pre {
   pointer-events: auto;
 }
 
-.map-sidebar {
+.map-sidebar-shell {
   position: absolute;
   top: 50%;
   left: 2rem;
   transform: translateY(-50%);
   width: 5.1rem;
+  min-height: 16rem;
+  overflow: hidden;
+  border-radius: 2rem;
+  z-index: 15;
+  contain: layout paint;
+  transition:
+    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.map-sidebar {
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-height: inherit;
   padding: 1.2rem 0.65rem;
   background: rgba(10, 14, 21, 0.74);
   backdrop-filter: blur(28px) saturate(180%);
-  border-radius: 2rem;
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-radius: inherit;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 15;
   overflow: hidden;
-  will-change: width, transform;
   transition:
-    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
     padding 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.32s ease;
+}
+
+.map-sidebar-shell.is-open {
+  width: 16rem;
 }
 
 .map-sidebar-nav,
 .map-sidebar-footer {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.35rem;
 }
 
@@ -770,11 +787,11 @@ pre {
 .map-sidebar-cta {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0;
+  justify-content: flex-start;
+  gap: 0.85rem;
   width: 100%;
   min-height: 3.4rem;
-  padding: 0.5rem;
+  padding: 0.5rem 0.8rem;
   border-radius: 1.2rem;
   text-decoration: none;
   border: none;
@@ -786,7 +803,6 @@ pre {
   text-align: left;
   overflow: hidden;
   transition:
-    gap 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     padding 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     background-color 0.2s ease,
     box-shadow 0.2s ease,
@@ -794,8 +810,8 @@ pre {
 }
 
 .map-sidebar-icon {
-  flex: 0 0 auto;
-  width: 1.8rem;
+  flex: 0 0 2.2rem;
+  width: 2.2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -850,32 +866,28 @@ pre {
   color: #f7f5ff;
 }
 
-.map-sidebar.is-open {
-  width: 16rem;
+.map-sidebar-shell.is-open .map-sidebar {
   padding-inline: 1rem;
   box-shadow: 0 34px 90px rgba(0, 0, 0, 0.46);
 }
 
-.map-sidebar.is-open .map-sidebar-link,
-.map-sidebar.is-open .map-sidebar-cta {
-  justify-content: flex-start;
-  gap: 0.85rem;
+.map-sidebar-shell.is-open .map-sidebar-link,
+.map-sidebar-shell.is-open .map-sidebar-cta {
   padding-inline: 1rem;
 }
 
-.map-sidebar.is-open .map-sidebar-icon {
-  flex: 0 0 2.2rem;
-  width: 2.2rem;
+.map-sidebar-shell.is-open .map-sidebar-icon {
+  flex-basis: 2.2rem;
 }
 
-.map-sidebar.is-open .map-sidebar-label,
-.map-sidebar.is-open .map-sidebar-meta {
+.map-sidebar-shell.is-open .map-sidebar-label,
+.map-sidebar-shell.is-open .map-sidebar-meta {
   max-width: 8rem;
   opacity: 1;
   transform: translateX(0);
 }
 
-.map-sidebar.is-open .map-sidebar-meta {
+.map-sidebar-shell.is-open .map-sidebar-meta {
   margin-left: auto;
   color: #93a6bf;
   font-size: 0.8rem;
@@ -1932,19 +1944,24 @@ pre {
 }
 
 @media (max-width: 1024px) {
-  .map-sidebar {
+  .map-sidebar-shell {
     transform: translateX(calc(-100% - 1rem));
-    transition: transform 0.24s ease;
-    border-radius: 2rem;
     width: min(22rem, calc(100vw - 1.5rem));
     top: 0.75rem;
     left: 0.75rem;
     bottom: 0.75rem;
-    padding-top: 5.6rem;
+    min-height: auto;
+    transition: transform 0.24s ease;
   }
 
-  .map-sidebar.is-open {
+  .map-sidebar-shell.is-open {
     transform: translateX(0);
+  }
+
+  .map-sidebar {
+    width: 100%;
+    min-height: 100%;
+    padding-top: 5.6rem;
   }
 
   .map-top-stack {
@@ -2148,14 +2165,20 @@ pre {
     max-width: none;
   }
 
-  .map-sidebar {
+  .map-sidebar-shell {
     top: 0.75rem;
     left: 0.75rem;
     bottom: 0.75rem;
     transform: none;
     width: min(18rem, calc(100vw - 1.5rem));
-    padding: 5.4rem 0.85rem 0.85rem;
+    min-height: auto;
     border-radius: 1.6rem;
+  }
+
+  .map-sidebar {
+    width: 100%;
+    min-height: 100%;
+    padding: 5.4rem 0.85rem 0.85rem;
   }
 
   .map-sidebar-link,
