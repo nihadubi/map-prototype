@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPin } from '../../../lib/backend/pinsClient';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPin, updatePin } from '../../../lib/backend/pinsClient';
 import { hasValidationErrors, validatePinForm } from '../utils/pinValidation';
 
 const initialValues = {
@@ -18,12 +18,16 @@ function getCreatePinErrorMessage() {
   return 'Could not create pin. Check your Supabase configuration and table permissions.';
 }
 
-function getCreatePinErrorMessageFromError(error) {
+function getUpdatePinErrorMessage() {
+  return 'Could not update pin. Check your Supabase configuration and table permissions.';
+}
+
+function getPinSubmitErrorMessageFromError(error, mode) {
   const message = String(error?.message || '').toLowerCase();
   const code = String(error?.code || '').toLowerCase();
 
   if (message.includes('signed in')) {
-    return 'Please sign in again before creating a pin.';
+    return `Please sign in again before ${mode === 'edit' ? 'editing' : 'creating'} a pin.`;
   }
 
   if (message.includes('profile is not ready')) {
@@ -36,7 +40,7 @@ function getCreatePinErrorMessageFromError(error) {
     || message.includes('not allowed')
     || message.includes('violates row-level security')
   ) {
-    return 'Create pin is blocked by Supabase RLS. Apply the latest schema.sql and make sure pins.created_by matches auth.uid().';
+    return `${mode === 'edit' ? 'Edit pin is' : 'Create pin is'} blocked by Supabase RLS. Apply the latest schema.sql and make sure pins.created_by matches auth.uid().`;
   }
 
   if (
@@ -47,18 +51,60 @@ function getCreatePinErrorMessageFromError(error) {
     return 'Pins table is missing in Supabase. Run the latest schema.sql on your project.';
   }
 
-  return getCreatePinErrorMessage();
+  return mode === 'edit' ? getUpdatePinErrorMessage() : getCreatePinErrorMessage();
 }
 
-export function useAddPinForm({ initialCoordinates = null, user, onSuccess }) {
-  const [values, setValues] = useState(() => ({
+function buildFormValues(initialCoordinates, initialPin) {
+  return {
     ...initialValues,
+    type: initialPin?.type || initialValues.type,
+    title: initialPin?.title || '',
+    description: initialPin?.description || '',
+    category: initialPin?.category || initialValues.category,
     lat: initialCoordinates?.lat != null ? String(initialCoordinates.lat) : '',
     lng: initialCoordinates?.lng != null ? String(initialCoordinates.lng) : '',
+    eventDate: initialPin?.eventDate || '',
+    startTime: initialPin?.startTime || '',
+    placeType: initialPin?.placeType || '',
+  };
+}
+
+export function useAddPinForm({
+  initialCoordinates = null,
+  initialPin = null,
+  mode = 'create',
+  user,
+  onSuccess,
+}) {
+  const initialCoordinatesRef = useRef(initialCoordinates);
+  const initialPinRef = useRef(initialPin);
+
+  useEffect(() => {
+    initialCoordinatesRef.current = initialCoordinates;
+    initialPinRef.current = initialPin;
+  }, [initialCoordinates, initialPin]);
+
+  const [values, setValues] = useState(() => ({
+    ...buildFormValues(initialCoordinates, initialPin),
   }));
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  useEffect(() => {
+    const nextInitialPin = initialPinRef.current;
+    const nextInitialCoordinates = nextInitialPin
+      ? {
+          lat: nextInitialPin.lat ?? nextInitialPin.coordinates?.[0],
+          lng: nextInitialPin.lng ?? nextInitialPin.coordinates?.[1],
+        }
+      : initialCoordinatesRef.current;
+
+    setValues(buildFormValues(nextInitialCoordinates, nextInitialPin));
+    setErrors({});
+    setSubmitError('');
+    setIsSubmitting(false);
+  }, [initialPin?.id, mode]);
 
   useEffect(() => {
     setValues((current) => {
@@ -99,12 +145,8 @@ export function useAddPinForm({ initialCoordinates = null, user, onSuccess }) {
     };
   }, [values.lat, values.lng]);
 
-  const resetForm = useCallback((coordinates = null) => {
-    setValues({
-      ...initialValues,
-      lat: coordinates?.lat != null ? String(coordinates.lat) : '',
-      lng: coordinates?.lng != null ? String(coordinates.lng) : '',
-    });
+  const resetForm = useCallback((coordinates = null, pin = null) => {
+    setValues(buildFormValues(coordinates, pin));
     setErrors({});
     setSubmitError('');
     setIsSubmitting(false);
@@ -193,17 +235,24 @@ export function useAddPinForm({ initialCoordinates = null, user, onSuccess }) {
     setIsSubmitting(true);
 
     try {
-      const createdPinId = await createPin(values, user);
-      await onSuccess?.(createdPinId, values);
-      return createdPinId;
+      const nextPinId = mode === 'edit' && initialPin?.id
+        ? initialPin.id
+        : await createPin(values, user);
+
+      if (mode === 'edit' && initialPin?.id) {
+        await updatePin(initialPin.id, values, user);
+      }
+
+      await onSuccess?.(nextPinId, values, mode);
+      return nextPinId;
     } catch (error) {
-      console.error('Create pin failed:', error);
-      setSubmitError(getCreatePinErrorMessageFromError(error));
+      console.error(`${mode === 'edit' ? 'Update' : 'Create'} pin failed:`, error);
+      setSubmitError(getPinSubmitErrorMessageFromError(error, mode));
       return null;
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, onSuccess, user, values]);
+  }, [initialPin?.id, isSubmitting, mode, onSuccess, user, values]);
 
   return {
     values,

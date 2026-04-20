@@ -6,6 +6,7 @@ const navItems = [
 
 export function Sidebar({
   isOpen,
+  showBackdrop = false,
   onClose,
   onCloseAfterSelect,
   onHoverOpen,
@@ -19,7 +20,7 @@ export function Sidebar({
   return (
     <>
       <div
-        className={`map-sidebar-backdrop ${isOpen ? 'is-open' : ''}`.trim()}
+        className={`map-sidebar-backdrop ${showBackdrop ? 'is-open' : ''}`.trim()}
         onClick={onClose}
         aria-hidden="true"
       />

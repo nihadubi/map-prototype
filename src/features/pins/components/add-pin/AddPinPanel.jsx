@@ -2,6 +2,7 @@ import { TypeSelector } from './TypeSelector';
 
 export function AddPinPanel({
   user,
+  mode = 'create',
   values,
   errors,
   isSubmitting,
@@ -20,6 +21,7 @@ export function AddPinPanel({
 }) {
   const formId = 'undrpin-add-pin-form';
   const locationReady = Boolean(selectedCoordinates);
+  const isEditMode = mode === 'edit';
   const fieldBaseClass =
     'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white placeholder:text-slate-500 outline-none transition focus:border-indigo-400/60 focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/10';
   const isDrawer = variant === 'drawer';
@@ -37,9 +39,11 @@ export function AddPinPanel({
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-                {locationReady ? 'Location Selected' : 'Map First Flow'}
+                {locationReady ? (isEditMode ? 'Ready To Update' : 'Location Selected') : 'Map First Flow'}
               </p>
-              <h2 className="font-headline text-[1.75rem] font-extrabold tracking-tight text-white">Create Pin</h2>
+              <h2 className="font-headline text-[1.75rem] font-extrabold tracking-tight text-white">
+                {isEditMode ? 'Edit Pin' : 'Create Pin'}
+              </h2>
             </div>
             <div className="flex items-center gap-2">
               <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-300">
@@ -58,7 +62,9 @@ export function AddPinPanel({
             </div>
           </div>
           <p className="max-w-[26rem] text-sm leading-6 text-slate-400">
-            Click anywhere on the map, choose the spot, and publish a new {values.type} to UndrPin.
+            {isEditMode
+              ? `Update this ${values.type}, tweak the location if needed, and save the latest version to UndrPin.`
+              : `Click anywhere on the map, choose the spot, and publish a new ${values.type} to UndrPin.`}
           </p>
           <p className="mt-3 text-xs font-medium text-slate-500">Signed in as {user?.displayName || user?.email}</p>
         </div>
@@ -163,7 +169,7 @@ export function AddPinPanel({
 
         <div className="border-t border-white/10 bg-white/[0.02] px-5 pb-5 pt-4 sm:px-6">
           <div className="mb-4 flex items-center justify-between gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
-            <span>{locationReady ? 'Ready to publish' : 'Waiting for map selection'}</span>
+            <span>{locationReady ? (isEditMode ? 'Ready to update' : 'Ready to publish') : 'Waiting for map selection'}</span>
             <span>{values.type === 'event' ? 'Event pin' : 'Place pin'}</span>
           </div>
           <button
@@ -172,7 +178,11 @@ export function AddPinPanel({
             className="flex w-full items-center justify-center gap-2 rounded-[1.15rem] bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500 py-4 text-sm font-bold text-white shadow-[0_20px_45px_rgba(99,102,241,0.35)] transition hover:shadow-[0_24px_55px_rgba(99,102,241,0.42)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isSubmitting || submitDisabled}
           >
-            <span>{isSubmitting ? 'Creating Pin...' : 'Create Pin'}</span>
+            <span>
+              {isSubmitting
+                ? (isEditMode ? 'Saving Changes...' : 'Creating Pin...')
+                : (isEditMode ? 'Save Changes' : 'Create Pin')}
+            </span>
             <span className="material-symbols-outlined text-lg" aria-hidden="true">arrow_forward</span>
           </button>
           <button type="button" className="mt-3 w-full py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 transition hover:text-slate-300" onClick={onCancel} disabled={isSubmitting}>

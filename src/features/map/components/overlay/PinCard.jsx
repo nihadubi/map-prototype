@@ -31,11 +31,15 @@ function getPinSummary(pin) {
 export function PinCard({
   pin,
   isSaved,
+  isOwner = false,
   isExpanded,
+  isArchivePending = false,
   onToggleExpanded,
   onDirectionsClick,
   onShareClick,
   onToggleSaved,
+  onEditPin,
+  onArchivePin,
 }) {
   if (!pin) {
     return null;
@@ -103,6 +107,22 @@ export function PinCard({
           </div>
 
           <p className="map-pin-description">{pin.description || 'No description added yet.'}</p>
+
+          {isOwner ? (
+            <div className="map-pin-owner-actions">
+              <button type="button" className="map-secondary-button" onClick={onEditPin}>
+                Edit Pin
+              </button>
+              <button
+                type="button"
+                className="map-secondary-button map-secondary-button-danger"
+                onClick={onArchivePin}
+                disabled={isArchivePending}
+              >
+                {isArchivePending ? 'Archiving...' : 'Archive Pin'}
+              </button>
+            </div>
+          ) : null}
 
           <div className="map-pin-card-expandable">
             <dl className="map-pin-details-grid">

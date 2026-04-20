@@ -13,6 +13,7 @@ export function useMapCreateFlow({
   const [focusedPinId, setFocusedPinId] = useState(null);
   const [createdPinId, setCreatedPinId] = useState(null);
   const [isManualAddPinPanelOpen, setIsManualAddPinPanelOpen] = useState(false);
+  const [editingPin, setEditingPin] = useState(null);
 
   const routeOpenCreate = searchParams.get('openCreate') === '1';
   const routeLat = searchParams.get('lat');
@@ -40,8 +41,26 @@ export function useMapCreateFlow({
     return nextCoordinates;
   }, [routeLat, routeLng]);
 
-  const selectedCoordinates = selectedCoordinatesState ?? routeSelectedCoordinates;
-  const isAddPinPanelOpen = isManualAddPinPanelOpen || (routeOpenCreate && isAuthenticated);
+  const editingPinCoordinates = useMemo(() => {
+    if (!editingPin) {
+      return null;
+    }
+
+    const nextCoordinates = {
+      lat: Number(editingPin.lat ?? editingPin.coordinates?.[0]),
+      lng: Number(editingPin.lng ?? editingPin.coordinates?.[1]),
+    };
+
+    if (!Number.isFinite(nextCoordinates.lat) || !Number.isFinite(nextCoordinates.lng)) {
+      return null;
+    }
+
+    return nextCoordinates;
+  }, [editingPin]);
+
+  const selectedCoordinates = selectedCoordinatesState ?? routeSelectedCoordinates ?? editingPinCoordinates;
+  const isAddPinPanelOpen = isManualAddPinPanelOpen || Boolean(editingPin) || (routeOpenCreate && isAuthenticated);
+  const panelMode = editingPin ? 'edit' : 'create';
 
   useEffect(() => {
     if (!routeOpenCreate) {
@@ -72,11 +91,25 @@ export function useMapCreateFlow({
     }
 
     closeOverlayPanels();
+    setEditingPin(null);
     setIsManualAddPinPanelOpen(true);
+  }
+
+  function openEditPinPanel(pin) {
+    if (!pin) {
+      return;
+    }
+
+    closeOverlayPanels();
+    setSelectedCoordinates(null);
+    setCreatedPinId(null);
+    setEditingPin(pin);
+    setIsManualAddPinPanelOpen(false);
   }
 
   function closeAddPinPanel() {
     setIsManualAddPinPanelOpen(false);
+    setEditingPin(null);
     setSelectedCoordinates(null);
   }
 
@@ -88,10 +121,14 @@ export function useMapCreateFlow({
     }
 
     setSelectedCoordinates(coordinates);
-    setFocusedPinId(null);
+    setFocusedPinId(editingPin ? editingPin.id : null);
     closeOverlayPanels();
 
     if (isAuthenticated) {
+      if (editingPin) {
+        return;
+      }
+
       if (openCreateOnMapClick) {
         setIsManualAddPinPanelOpen(true);
       }
@@ -104,6 +141,15 @@ export function useMapCreateFlow({
   function handleCreateSuccess(nextCreatedPinId) {
     setCreatedPinId(nextCreatedPinId);
     setFocusedPinId(nextCreatedPinId);
+    setEditingPin(null);
+    setIsManualAddPinPanelOpen(false);
+    setSelectedCoordinates(null);
+  }
+
+  function handleEditSuccess(nextPinId) {
+    setCreatedPinId(null);
+    setFocusedPinId(nextPinId);
+    setEditingPin(null);
     setIsManualAddPinPanelOpen(false);
     setSelectedCoordinates(null);
   }
@@ -120,11 +166,15 @@ export function useMapCreateFlow({
     setFocusedPinId,
     createdPinId,
     isAddPinPanelOpen,
+    panelMode,
+    editingPin,
     routeCreatedPinId,
     openAddPinPanel,
+    openEditPinPanel,
     closeAddPinPanel,
     handleMapLocationSelect,
     handleCreateSuccess,
+    handleEditSuccess,
     clearCreatedPinState,
   };
 }

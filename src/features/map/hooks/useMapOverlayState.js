@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export function useMapOverlayState() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarDrawerOpen, setIsSidebarDrawerOpen] = useState(false);
+  const [isSidebarHoverOpen, setIsSidebarHoverOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPinCardExpanded, setIsPinCardExpanded] = useState(false);
   const [locateMessage, setLocateMessage] = useState('');
+  const isSidebarOpen = isSidebarDrawerOpen || isSidebarHoverOpen;
 
   useEffect(() => {
     if (!locateMessage) {
@@ -19,14 +21,45 @@ export function useMapOverlayState() {
   }, [locateMessage]);
 
   const closePanels = useCallback(() => {
-    setIsSidebarOpen(false);
+    setIsSidebarDrawerOpen(false);
+    setIsSidebarHoverOpen(false);
     setIsSettingsOpen(false);
     setIsPinCardExpanded(false);
   }, []);
 
+  const openSidebarDrawer = useCallback(() => {
+    setIsSidebarDrawerOpen(true);
+  }, []);
+
+  const closeSidebarDrawer = useCallback(() => {
+    setIsSidebarDrawerOpen(false);
+  }, []);
+
+  const toggleSidebarDrawer = useCallback(() => {
+    setIsSidebarDrawerOpen((current) => !current);
+  }, []);
+
+  const openSidebarHover = useCallback(() => {
+    setIsSidebarHoverOpen(true);
+  }, []);
+
+  const closeSidebarHover = useCallback(() => {
+    setIsSidebarHoverOpen(false);
+  }, []);
+
+  const resetSidebarHover = useCallback(() => {
+    setIsSidebarHoverOpen(false);
+  }, []);
+
   return {
     isSidebarOpen,
-    setIsSidebarOpen,
+    isSidebarBackdropVisible: isSidebarDrawerOpen,
+    openSidebarDrawer,
+    closeSidebarDrawer,
+    toggleSidebarDrawer,
+    openSidebarHover,
+    closeSidebarHover,
+    resetSidebarHover,
     isSettingsOpen,
     setIsSettingsOpen,
     isPinCardExpanded,

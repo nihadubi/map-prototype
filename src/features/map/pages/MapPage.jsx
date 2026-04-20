@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../app/providers/useAuth';
-import { subscribeToPins } from '../../../lib/backend/pinsClient';
+import { archivePin, subscribeToPins } from '../../../lib/backend/pinsClient';
 import { useAddPinForm } from '../../pins/hooks/useAddPinForm';
 import { Header } from '../components/overlay/Header';
 import { MapControls } from '../components/overlay/MapControls';
@@ -113,7 +113,12 @@ export function MapPage() {
 
   const {
     isSidebarOpen,
-    setIsSidebarOpen,
+    isSidebarBackdropVisible,
+    closeSidebarDrawer,
+    toggleSidebarDrawer,
+    openSidebarHover,
+    closeSidebarHover,
+    resetSidebarHover,
     isSettingsOpen,
     setIsSettingsOpen,
     isPinCardExpanded,
@@ -130,11 +135,15 @@ export function MapPage() {
     setFocusedPinId,
     createdPinId,
     isAddPinPanelOpen,
+    panelMode,
+    editingPin,
     routeCreatedPinId,
     openAddPinPanel,
+    openEditPinPanel,
     closeAddPinPanel,
     handleMapLocationSelect,
     handleCreateSuccess,
+    handleEditSuccess,
     clearCreatedPinState,
   } = useMapCreateFlow({
     navigate,
@@ -165,6 +174,8 @@ export function MapPage() {
     routeCreatedPinId,
     isAddPinPanelOpen,
   });
+
+  const [isArchivePending, setIsArchivePending] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToPins(
@@ -200,10 +211,18 @@ export function MapPage() {
     resetForm: resetAddPinForm,
   } = useAddPinForm({
     initialCoordinates: selectedCoordinates,
+    initialPin: editingPin,
+    mode: panelMode,
     user,
-    onSuccess: async (nextCreatedPinId) => {
-      setSelectedPinId(nextCreatedPinId);
-      handleCreateSuccess(nextCreatedPinId);
+    onSuccess: async (nextPinId, _values, nextMode) => {
+      setSelectedPinId(nextPinId);
+      if (nextMode === 'edit') {
+        handleEditSuccess(nextPinId);
+        setIsPinCardExpanded(true);
+        setLocateMessage('Pin updated successfully.');
+        return;
+      }
+      handleCreateSuccess(nextPinId);
     },
   });
 
@@ -260,9 +279,15 @@ export function MapPage() {
     setFocusedPinId(null);
     clearCreatedPinState();
     setIsPinCardExpanded(false);
+    resetSidebarHover();
   }
 
   function handleMapCanvasClick(coordinates) {
+    if (isAddPinPanelOpen) {
+      handleMapLocationSelect(coordinates);
+      return;
+    }
+
     if (selectedPin || effectiveSelectedPinId || isPinCardExpanded) {
       setSelectedPinId(null);
       setFocusedPinId(null);
@@ -317,6 +342,46 @@ export function MapPage() {
     }
   }
 
+  function handleEditPin() {
+    if (!selectedPin) {
+      return;
+    }
+
+    loadAddPinPanelModule();
+    openEditPinPanel(selectedPin);
+  }
+
+  async function handleArchivePin() {
+    const userId = user?.id || user?.uid;
+
+    if (!selectedPin || !userId) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Archive "${selectedPin.title}" from the public map?`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setIsArchivePending(true);
+      await archivePin(selectedPin.id, user);
+      setSelectedPinId(null);
+      setFocusedPinId(null);
+      clearCreatedPinState();
+      setIsPinCardExpanded(false);
+      setLocateMessage('Pin archived successfully.');
+    } catch (error) {
+      console.error('Archive pin failed:', error);
+      setLocateMessage('Could not archive this pin right now. Please try again.');
+    } finally {
+      setIsArchivePending(false);
+    }
+  }
+
+  const currentUserId = user?.id || user?.uid;
+  const isSelectedPinOwner = Boolean(selectedPin && currentUserId && selectedPin.createdById === currentUserId);
+
   return (
     <section className="map-screen map-theme-night">
       <Suspense fallback={<MapCanvasFallback />}>
@@ -339,7 +404,7 @@ export function MapPage() {
             query={searchQuery}
             onQueryChange={setSearchQuery}
             isSidebarOpen={isSidebarOpen}
-            onMenuClick={() => setIsSidebarOpen((current) => !current)}
+            onMenuClick={toggleSidebarDrawer}
             isAuthLoading={isAuthLoading}
             isAuthenticated={isAuthenticated}
             user={user}
@@ -377,20 +442,21 @@ export function MapPage() {
 
         <Sidebar
           isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
+          showBackdrop={isSidebarBackdropVisible}
+          onClose={closeSidebarDrawer}
           onCloseAfterSelect={() => {
             if (!isDesktopViewport()) {
-              setIsSidebarOpen(false);
+              closeSidebarDrawer();
             }
           }}
           onHoverOpen={() => {
             if (isDesktopViewport() && mapSettings.sidebarExpandOnHover) {
-              setIsSidebarOpen(true);
+              openSidebarHover();
             }
           }}
           onHoverClose={() => {
             if (isDesktopViewport() && mapSettings.sidebarExpandOnHover) {
-              setIsSidebarOpen(false);
+              closeSidebarHover();
             }
           }}
           activeSection={activeSection}
@@ -400,7 +466,7 @@ export function MapPage() {
             loadSettingsPanelModule();
             setIsSettingsOpen(true);
             if (!isDesktopViewport()) {
-              setIsSidebarOpen(false);
+              closeSidebarDrawer();
             }
           }}
           onCreatePinClick={() => {
@@ -421,6 +487,7 @@ export function MapPage() {
         <Suspense fallback={<DeferredPanelFallback />}>
           <AddPinPanel
             user={user}
+            mode={panelMode}
             values={addPinValues}
             errors={addPinErrors}
             isSubmitting={isAddPinSubmitting}
@@ -432,9 +499,11 @@ export function MapPage() {
             onCancel={closeAddPinPanel}
             variant="drawer"
             isOpen={isAddPinPanelOpen}
-            locationPrompt="Click anywhere on the map to choose where this new pin should live. The form will keep listening while you pick the location."
+            locationPrompt={panelMode === 'edit'
+              ? 'Click a different point on the map if you want to move this pin before saving your changes.'
+              : 'Click anywhere on the map to choose where this new pin should live. The form will keep listening while you pick the location.'}
             submitDisabled={!selectedCoordinates}
-            cancelLabel="Close Panel"
+            cancelLabel={panelMode === 'edit' ? 'Cancel Editing' : 'Close Panel'}
           />
         </Suspense>
 
@@ -449,11 +518,15 @@ export function MapPage() {
             <PinCard
               pin={selectedPin}
               isSaved={selectedPin ? savedPinIds.includes(selectedPin.id) : false}
+              isOwner={isSelectedPinOwner}
               isExpanded={isPinCardExpanded}
+              isArchivePending={isArchivePending}
               onToggleExpanded={() => setIsPinCardExpanded((current) => !current)}
               onDirectionsClick={handleDirectionsClick}
               onShareClick={handleShareClick}
               onToggleSaved={() => void (selectedPin && toggleSavedPin(selectedPin.id))}
+              onEditPin={handleEditPin}
+              onArchivePin={() => void handleArchivePin()}
             />
           </Suspense>
         ) : null}

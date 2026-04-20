@@ -8,6 +8,14 @@ export async function createPin(values, user) {
   return supabasePinsAdapter.createPin(values, user);
 }
 
+export async function updatePin(pinId, values, user) {
+  return supabasePinsAdapter.updatePin(pinId, values, user);
+}
+
+export async function archivePin(pinId, user) {
+  return supabasePinsAdapter.archivePin(pinId, user);
+}
+
 export async function getSavedPinIds(user) {
   return supabasePinsAdapter.getSavedPinIds(user);
 }

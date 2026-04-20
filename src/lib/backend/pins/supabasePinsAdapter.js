@@ -22,12 +22,30 @@ function mapSupabasePin(row) {
     lat: row.lat,
     lng: row.lng,
     createdBy,
+    createdById: row.created_by || null,
     createdAtLabel: row.created_at ? new Date(row.created_at).toLocaleString() : 'Just now',
     createdAt: row.created_at,
     eventDate: row.event_date || null,
     startTime: row.start_time || null,
     placeType: row.place_type || null,
     status: row.status || 'active',
+  };
+}
+
+function buildPinPayload(values) {
+  return {
+    type: values.type,
+    title: values.title.trim(),
+    description: values.description.trim(),
+    category: values.category.trim() || 'community',
+    city_slug: 'baku',
+    lat: Number(values.lat),
+    lng: Number(values.lng),
+    status: values.status || 'active',
+    event_date: values.type === 'event' ? values.eventDate : null,
+    start_time: values.type === 'event' ? values.startTime || null : null,
+    place_type: values.type === 'place' ? values.placeType.trim() || null : null,
+    updated_at: new Date().toISOString(),
   };
 }
 
@@ -102,17 +120,7 @@ export const supabasePinsAdapter = {
 
     const payload = {
       created_by: userId,
-      type: values.type,
-      title: values.title.trim(),
-      description: values.description.trim(),
-      category: values.category.trim() || 'community',
-      city_slug: 'baku',
-      lat: Number(values.lat),
-      lng: Number(values.lng),
-      status: 'active',
-      event_date: values.type === 'event' ? values.eventDate : null,
-      start_time: values.type === 'event' ? values.startTime || null : null,
-      place_type: values.type === 'place' ? values.placeType.trim() || null : null,
+      ...buildPinPayload(values),
     };
 
     const { data, error } = await supabase.from('pins').insert(payload).select('id').single();
@@ -126,6 +134,73 @@ export const supabasePinsAdapter = {
     }
 
     return data.id;
+  },
+
+  async updatePin(pinId, values, user) {
+    if (!supabase) {
+      throw new Error('Supabase client is not configured.');
+    }
+
+    if (!user?.id && !user?.uid) {
+      throw new Error('You must be signed in to edit a pin.');
+    }
+
+    const userId = user.id || user.uid;
+    const payload = buildPinPayload(values);
+
+    const { data, error } = await supabase
+      .from('pins')
+      .update(payload)
+      .eq('id', pinId)
+      .eq('created_by', userId)
+      .select('id')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.id) {
+      throw new Error('You are not allowed to edit this pin.');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PINS_REFRESH_EVENT));
+    }
+  },
+
+  async archivePin(pinId, user) {
+    if (!supabase) {
+      throw new Error('Supabase client is not configured.');
+    }
+
+    if (!user?.id && !user?.uid) {
+      throw new Error('You must be signed in to archive a pin.');
+    }
+
+    const userId = user.id || user.uid;
+    const { data, error } = await supabase
+      .from('pins')
+      .update({
+        status: 'archived',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', pinId)
+      .eq('created_by', userId)
+      .select('id')
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.id) {
+      throw new Error('You are not allowed to archive this pin.');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(PINS_REFRESH_EVENT));
+    }
   },
 
   async getSavedPinIds(user) {
